@@ -58,6 +58,7 @@ def test_resolving_twice_answers_a_row_saying_so(client: TestClient) -> None:
     assert "no unknown action" in row.text
 
 
+@pytest.mark.usefixtures("no_ops_db")
 def test_index_links_process_dashboards(tmp_path: Path) -> None:
     app = create_app(
         Settings(processes_dir=tmp_path),

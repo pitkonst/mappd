@@ -1,6 +1,7 @@
 """Every leaf command's --help exits 0 and prints its docstring's example verbatim."""
 
 import inspect
+import re
 from typing import TYPE_CHECKING
 
 import typer.main
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
     from typer._click.core import Command
 
 runner = CliRunner()
+ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]|\x1b\]8;[^\x1b]*\x1b\\")
 
 
 def _leaves(
@@ -44,6 +46,7 @@ def test_every_command_shows_its_example_verbatim() -> None:
     for path, leaf in leaves:
         r = runner.invoke(app, [*path, "--help"], env={"COLUMNS": "200"})
         assert r.exit_code == 0, path
-        assert "Example:" in r.stdout, f"mappd {' '.join(path)} --help has no example"
+        out = ANSI.sub("", r.stdout)  # typer forces styling when GITHUB_ACTIONS is set
+        assert "Example:" in out, f"mappd {' '.join(path)} --help has no example"
         for line in _example_lines(leaf.callback):
-            assert line in r.stdout, f"mappd {' '.join(path)} --help lacks {line!r}"
+            assert line in out, f"mappd {' '.join(path)} --help lacks {line!r}"

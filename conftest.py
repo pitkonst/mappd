@@ -11,12 +11,12 @@ from dbos import DBOS
 from fake_gateway import Gateway, running
 from psycopg import sql
 
-from mappd import runtime
+from mappd import ops, runtime
 from mappd.db.migrate import upgrade
 from mappd.settings import Settings
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     from psycopg.rows import TupleRow
 
@@ -145,6 +145,24 @@ def acceptance_clean(request: pytest.FixtureRequest) -> None:
     request.getfixturevalue("acceptance_stack")
     stack.reset()
     stack.start("v1")
+
+
+@pytest.fixture
+def no_ops_db(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The index's ops counts without Postgres: every process idle, the outbox empty."""
+
+    async def areport(processes: Iterable[tuple[str, ops.Cases]]) -> ops.OpsReport:
+        return ops.OpsReport(
+            processes=[
+                ops.ProcessOps(
+                    process=name, waiting=0, oldest_waiting=None, stuck=0, stuck_cases=[]
+                )
+                for name, _ in processes
+            ],
+            outbox=ops.OutboxOps(unknown=0, failed=0, webhooks_redelivering=0, webhooks_given_up=0),
+        )
+
+    monkeypatch.setattr(ops, "areport", areport)
 
 
 @pytest.fixture(autouse=True)

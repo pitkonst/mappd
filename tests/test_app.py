@@ -160,6 +160,7 @@ def test_fastapi_http_tracing_is_disabled_so_workflows_are_trace_roots(processes
     assert exporter.get_finished_spans() == ()
 
 
+@pytest.mark.usefixtures("no_ops_db")
 def test_app_serves_static_index_and_process_pages(tmp_path: Path) -> None:
     pages = APIRouter()
 
@@ -272,6 +273,7 @@ def test_app_serves_the_workflows_api_with_its_settings(tmp_path: Path) -> None:
     assert {"/api/v1/workflows", "/api/v1/workflows/{workflow_id}"} <= paths
 
 
+@pytest.mark.usefixtures("no_ops_db")
 def test_app_defaults_to_open_auth_and_serves_auth_routes(tmp_path: Path) -> None:
     app = create_app(Settings(processes_dir=tmp_path), processes=[])
     assert app.state.auth_mode == "none"

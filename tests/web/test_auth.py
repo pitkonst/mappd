@@ -91,6 +91,7 @@ def user(name: str, *roles: str) -> dict[str, str]:
     return {"X-Forwarded-User": name, "X-Forwarded-Roles": ",".join(roles)}
 
 
+@pytest.mark.usefixtures("no_ops_db")
 def test_mode_none_passes_everything_and_stamps_nothing(tmp_path: Path) -> None:
     client = TestClient(app_for(tmp_path, "none"))
     assert client.get("/").status_code == 200
@@ -134,6 +135,7 @@ def test_public_paths_stay_open(tmp_path: Path) -> None:
     assert "handled elsewhere" in login.text, "header mode explains sign-in is external"
 
 
+@pytest.mark.usefixtures("no_ops_db")
 def test_any_signed_in_principal_reads(tmp_path: Path) -> None:
     client = TestClient(app_for(tmp_path))
     assert client.get("/api/v1/demo/items", headers=user("olga", "dispatcher")).status_code == 200
