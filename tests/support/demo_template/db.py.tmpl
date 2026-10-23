@@ -1,0 +1,23 @@
+"""Table metadata of the $name process; the source of truth is the migrations.
+
+Keep the definitions in sync with migrations/ — write a schema test if they could drift.
+"""
+
+import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB
+
+METADATA = sa.MetaData()
+_NOW = sa.text("now()")
+
+CASES = sa.Table(
+    "${name}_cases",
+    METADATA,
+    sa.Column("id", sa.BigInteger, primary_key=True),
+    sa.Column("external_id", sa.Text, nullable=False, unique=True),
+    sa.Column("status", sa.Text, nullable=False, server_default="new"),
+    sa.Column("payload", JSONB, nullable=False),
+    sa.Column("output", JSONB),
+    sa.Column("version", sa.Integer, nullable=False, server_default="0"),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=_NOW),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=_NOW),
+)

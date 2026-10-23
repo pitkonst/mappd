@@ -1,0 +1,34 @@
+<div id="workflow-list"{% if live %} hx-get="/workflows/list?{{ query }}" hx-trigger="every 10s" hx-swap="outerHTML" hx-disinherit="*"{% endif %}>
+<div class="stats">
+  {% for s in tiles %}
+  <a class="stat" href="/workflows?{{ tile_query(s) }}">
+    <div class="label"><span class="badge {{ badges.get(s, '') }}">{{ s }}</span></div>
+    <div class="value">{{ counts.get(s, 0) }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% if stats.queues %}
+<p class="meta">Queues: {% for q in stats.queues %}<span><code>{{ q.name }}</code> {{ q.waiting }} waiting / {{ q.running }} running</span>{% endfor %}</p>
+{% endif %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>status</th><th>name</th><th>created</th><th class="num wide">took</th><th class="wide">version</th><th class="wide">ID</th><th>error</th></tr></thead>
+  <tbody>
+  {% for w in rows %}
+  <tr>
+    <td class="nowrap"><span class="badge {{ badges.get(w.status, '') }}">{{ w.status }}</span>{% if w.stranded %} <span class="badge warn">stranded</span>{% endif %}</td>
+    <td><a href="{{ link(w.workflow_id) }}">{{ w.name }}</a></td>
+    <td class="nowrap">{% if w.created_at %}<span title="{{ w.created_at.isoformat() }}">{{ w.created_at | utc("%Y-%m-%d %H:%M:%S") }}</span>{% endif %}</td>
+    <td class="num wide">{% if w.duration_ms is not none %}{{ w.duration_ms }} ms{% endif %}</td>
+    <td class="wide">{{ w.app_version or "" }}</td>
+    <td class="wide"><a href="{{ link(w.workflow_id) }}"><code class="id" title="{{ w.workflow_id }}">{{ w.workflow_id | readable_id }}</code></a></td>
+    <td class="error-cell">{{ w.error_summary or "" }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="empty">no workflows</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="meta">{% if newer %}<a href="/workflows?{{ newer }}">‹ newer</a>{% endif %}{% if older %}<a href="/workflows?{{ older }}">older ›</a>{% endif %}</p>
+</div>

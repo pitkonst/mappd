@@ -1,0 +1,28 @@
+# Metrics and thresholds for rfq: field
+# comparison, no judge — the draft is a code template.
+metrics:
+  - name: outcome_accuracy
+    kind: exact_match
+    field: expected.outcome
+    threshold: 0.85
+  - name: escalation_role_accuracy
+    kind: exact_match
+    field: expected.escalate_to
+    when: {outcome: escalate}
+    threshold: 0.8
+  - name: line_items_f1
+    kind: python
+    python: processes.rfq.evals.metrics:line_items_f1
+    threshold: 0.8
+  - name: sku_f1
+    kind: python
+    python: processes.rfq.evals.metrics:sku_f1
+    threshold: 0.85
+  - name: totals_check
+    kind: python
+    python: processes.rfq.evals.metrics:totals_check
+    threshold: 0.8
+  - name: alternatives_accuracy
+    kind: python
+    python: processes.rfq.evals.metrics:alternatives_accuracy
+    threshold: 0.8

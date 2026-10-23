@@ -1,0 +1,10 @@
+# Acceptance only: the app reads its autonomy policy from a host temp dir (stack.set_policy),
+# and support sends through slow-smtp, which delays its reply for slow* recipients.
+services:
+  app:
+    environment:
+      MAPPD_SUPPORT_AUTONOMY: /policy/autonomy.yaml
+      MAPPD_SUPPORT_SMTP_HOST: slow-smtp
+      MAPPD_SUPPORT_SMTP_PORT: "2525"
+    volumes:
+      - ${MAPPD_TEST_POLICY_DIR}:/policy:ro

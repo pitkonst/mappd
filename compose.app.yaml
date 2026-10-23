@@ -1,0 +1,145 @@
+# The MAPP-D application on the stack: migrations, the app server, the mocks.
+# Always used together with compose.yaml:
+#
+#   docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+#
+# For development you do not need this file: `uv run mappd ...` covers the same
+# ground on the host (see .env.example and README.md).
+
+x-app: &app
+  build:
+    context: .
+    args:
+      MAPPD_APP_VERSION: ${MAPPD_APP_VERSION:-}
+  image: ${MAPPD_APP_IMAGE:-mappd-app:local}
+  environment:
+    MAPPD_DATABASE_URL: postgresql://${MAPPD_PG_USER:-mappd}:${MAPPD_PG_PASSWORD:-mappd}@postgres:5432/mappd
+    MAPPD_SYSTEM_DATABASE_URL: postgresql://${MAPPD_PG_USER:-mappd}:${MAPPD_PG_PASSWORD:-mappd}@postgres:5432/mappd_dbos
+    MAPPD_GATEWAY_URL: http://agentgateway:4000/v1
+    MAPPD_MLFLOW_URL: http://mlflow:5000
+    # Empty: the version baked into the image (a hash of the code). Set it to the git SHA to deploy.
+    MAPPD_APP_VERSION: ${MAPPD_APP_VERSION:-}
+    # Mail: the stack's GreenMail (IMAP 3143, SMTP 3025, plain); off unless MAPPD_<P>_MAIL_MODE=imap.
+    # Credentials and addresses come from .env; a deploy also points the hosts at real servers.
+    MAPPD_MAIL_POLL_SECONDS: ${MAPPD_MAIL_POLL_SECONDS:-30}
+    MAPPD_SUPPORT_MAIL_MODE: ${MAPPD_SUPPORT_MAIL_MODE:-off}
+    MAPPD_SUPPORT_MAIL_FROM: ${MAPPD_SUPPORT_MAIL_FROM:-support@mappd.test}
+    MAPPD_SUPPORT_IMAP_HOST: greenmail
+    MAPPD_SUPPORT_IMAP_PORT: "3143"
+    MAPPD_SUPPORT_IMAP_TLS: none
+    MAPPD_SUPPORT_IMAP_USER: ${MAPPD_SUPPORT_IMAP_USER:-support@mappd.test}
+    MAPPD_SUPPORT_IMAP_PASSWORD: ${MAPPD_SUPPORT_IMAP_PASSWORD:-mappd}
+    MAPPD_SUPPORT_IMAP_BACKFILL: ${MAPPD_SUPPORT_IMAP_BACKFILL:-false}
+    MAPPD_SUPPORT_SMTP_HOST: greenmail
+    MAPPD_SUPPORT_SMTP_PORT: "3025"
+    MAPPD_SUPPORT_SMTP_TLS: none
+    MAPPD_SUPPORT_SMTP_USER: ${MAPPD_SUPPORT_SMTP_USER:-support@mappd.test}
+    MAPPD_SUPPORT_SMTP_PASSWORD: ${MAPPD_SUPPORT_SMTP_PASSWORD:-mappd}
+    MAPPD_RFQ_MAIL_MODE: ${MAPPD_RFQ_MAIL_MODE:-off}
+    MAPPD_RFQ_MAIL_FROM: ${MAPPD_RFQ_MAIL_FROM:-rfq@mappd.test}
+    MAPPD_RFQ_IMAP_HOST: greenmail
+    MAPPD_RFQ_IMAP_PORT: "3143"
+    MAPPD_RFQ_IMAP_TLS: none
+    MAPPD_RFQ_IMAP_USER: ${MAPPD_RFQ_IMAP_USER:-rfq@mappd.test}
+    MAPPD_RFQ_IMAP_PASSWORD: ${MAPPD_RFQ_IMAP_PASSWORD:-mappd}
+    MAPPD_RFQ_IMAP_BACKFILL: ${MAPPD_RFQ_IMAP_BACKFILL:-false}
+    MAPPD_RFQ_SMTP_HOST: greenmail
+    MAPPD_RFQ_SMTP_PORT: "3025"
+    MAPPD_RFQ_SMTP_TLS: none
+    MAPPD_RFQ_SMTP_USER: ${MAPPD_RFQ_SMTP_USER:-rfq@mappd.test}
+    MAPPD_RFQ_SMTP_PASSWORD: ${MAPPD_RFQ_SMTP_PASSWORD:-mappd}
+    MAPPD_SUPPORT_WEBHOOK_URL: ${MAPPD_SUPPORT_WEBHOOK_URL:-}
+    MAPPD_SUPPORT_WEBHOOK_SECRET: ${MAPPD_SUPPORT_WEBHOOK_SECRET:-}
+    # Empty: the policy in processes/support/autonomy.yaml (reviewed like code).
+    MAPPD_SUPPORT_AUTONOMY: ${MAPPD_SUPPORT_AUTONOMY:-}
+    # Installation's Telegram bot: off unless configured; the acceptance stack polls the mock.
+    MAPPD_INSTALLATION_TELEGRAM_MODE: ${MAPPD_INSTALLATION_TELEGRAM_MODE:-off}
+    MAPPD_INSTALLATION_TELEGRAM_TOKEN: ${MAPPD_INSTALLATION_TELEGRAM_TOKEN:-}
+    MAPPD_INSTALLATION_TELEGRAM_API_URL: ${MAPPD_INSTALLATION_TELEGRAM_API_URL:-}
+    MAPPD_INSTALLATION_TELEGRAM_SECRET: ${MAPPD_INSTALLATION_TELEGRAM_SECRET:-}
+    # The bot's username (without @): the deep links that link an installer's chat name it.
+    MAPPD_INSTALLATION_BOT_NAME: ${MAPPD_INSTALLATION_BOT_NAME:-}
+    # The installation systems' MCP servers, multiplexed by the gateway.
+    MAPPD_INSTALLATION_MCP_URL: ${MAPPD_INSTALLATION_MCP_URL:-http://agentgateway:3000/mcp}
+    # Auth: off unless configured.
+    MAPPD_AUTH: ${MAPPD_AUTH:-}
+    MAPPD_AUTH_SECRET: ${MAPPD_AUTH_SECRET:-}
+    MAPPD_AUTH_TOKEN_HOURS: ${MAPPD_AUTH_TOKEN_HOURS:-}
+    MAPPD_AUTH_HEADER: ${MAPPD_AUTH_HEADER:-}
+    MAPPD_AUTH_ROLES_HEADER: ${MAPPD_AUTH_ROLES_HEADER:-}
+    MAPPD_AUTH_COOKIE_SECURE: ${MAPPD_AUTH_COOKIE_SECURE:-}
+
+services:
+  migrate:
+    <<: *app
+    command: ["mappd", "db", "migrate"]
+    restart: "no"
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  app:
+    <<: *app
+    ports:
+      - "127.0.0.1:${MAPPD_APP_PORT:-8000}:8000"
+    restart: unless-stopped
+    # uvicorn's 20 s for requests + the 30 s workflow drain fit inside it.
+    stop_grace_period: 60s
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      agentgateway: {condition: service_started}
+      mlflow: {condition: service_healthy}
+    healthcheck:
+      # --health: no mail-server logins every 30 s (a mail outage is not an app outage).
+      test: ["CMD", "mappd", "doctor", "--health"]
+      interval: 30s
+      timeout: 20s
+      start_period: 30s
+
+  # Every process's mock LLM behind one port (mappd.mocks.llm_router routes by request).
+  mock-llm:
+    <<: *app
+    profiles: [mocks]
+    command: ["uvicorn", "mappd.mocks.llm_router:app", "--host", "0.0.0.0", "--port", "9000"]
+    ports:
+      - "127.0.0.1:${MAPPD_MOCK_LLM_PORT:-9000}:9000"
+
+  # A stand-in help desk: verifies signed support webhooks and records them.
+  mock-webhook:
+    <<: *app
+    profiles: [mocks]
+    restart: unless-stopped
+    command: ["uvicorn", "processes.support.mocks.mock_webhook:app", "--host", "0.0.0.0", "--port", "9200"]
+    ports:
+      - "127.0.0.1:${MAPPD_MOCK_WEBHOOK_PORT:-9200}:9200"
+
+  # A stand-in for the Telegram Bot API: updates to poll, messages the bot sent.
+  mock-telegram:
+    <<: *app
+    profiles: [mocks]
+    restart: unless-stopped
+    command: ["uvicorn", "processes.installation.mocks.mock_telegram:app", "--host", "0.0.0.0", "--port", "9300"]
+    ports:
+      - "127.0.0.1:${MAPPD_MOCK_TELEGRAM_PORT:-9300}:9300"
+
+  # A stand-in for the installation systems (warehouse, logistics, tickets, contacts) over MCP.
+  mock-mcp:
+    <<: *app
+    profiles: [mocks]
+    restart: unless-stopped
+    command: ["uvicorn", "processes.installation.mocks.mock_mcp:app", "--host", "0.0.0.0", "--port", "9400"]
+    ports:
+      - "127.0.0.1:${MAPPD_MOCK_MCP_PORT:-9400}:9400"
+
+  # An SMTP relay to GreenMail that answers late for recipients named slow*: the window in which
+  # a crash leaves a sent email unacknowledged (tests/acceptance/test_mail.py).
+  slow-smtp:
+    <<: *app
+    profiles: [mocks]
+    restart: unless-stopped
+    command: ["python", "-m", "mappd.mocks.slow_smtp"]
+    environment:
+      MAPPD_SLOW_SMTP_UPSTREAM: greenmail:3025
+      MAPPD_SLOW_SMTP_UPSTREAM_USER: support@mappd.test
+      MAPPD_SLOW_SMTP_UPSTREAM_PASSWORD: mappd
+    depends_on:
+      greenmail: {condition: service_healthy}

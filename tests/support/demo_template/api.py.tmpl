@@ -1,0 +1,41 @@
+"""HTTP API of the $name process; a UI calls the same functions (AGENTS.md, rule 7)."""
+
+import sqlalchemy as sa
+from dbos import DBOS, SetWorkflowID
+from fastapi import APIRouter, HTTPException
+
+from mappd import db, ids
+
+from .db import CASES
+from .schemas import ${Name}Input
+from .workflow import run
+
+router = APIRouter(prefix="/api/v1/$name", tags=["$name"])
+
+
+@router.post("/cases", status_code=202)
+async def submit(case: ${Name}Input) -> dict[str, str]:
+    """Accept a case; a redelivery with the same external_id starts nothing new."""
+    workflow_id = ids.from_key("$name", case.external_id)
+    with SetWorkflowID(workflow_id):
+        await DBOS.start_workflow_async(run, case)
+    return {"workflow_id": workflow_id}
+
+
+@router.get("/cases/{external_id}")
+def get_case(external_id: str) -> dict[str, object]:
+    """The case as stored, with its status and version."""
+    with db.connect() as conn:
+        row = db.run(
+            conn,
+            sa.select(
+                CASES.c.external_id,
+                CASES.c.status,
+                CASES.c.payload,
+                CASES.c.output,
+                CASES.c.version,
+            ).where(CASES.c.external_id == external_id),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(404, f"no $name case {external_id!r}")
+    return dict(row)

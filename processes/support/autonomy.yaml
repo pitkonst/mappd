@@ -1,0 +1,16 @@
+# Autonomy policy of the support process, reviewed like code: a change ships with a deploy.
+# Edit with `mappd process shadow support on|off` and
+# `mappd process autonomy support <category> auto|review`.
+# Refunds are not listed: they always escalate (domain.ALWAYS_ESCALATE).
+shadow: false          # true: decisions are recorded, nothing is sent
+default: review        # categories not listed below
+categories:
+  how_to: review
+  malfunction: review
+  billing: review
+  delivery: review
+  other: review
+ready:                 # when the dashboard calls a category ready for auto
+  without_edits: 0.9
+  false_escalations_max: 0.1
+  min_cases: 30

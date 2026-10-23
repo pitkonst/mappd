@@ -1,0 +1,6 @@
+From: eve@example.com
+To: support@mappd.test
+Subject: No id
+Content-Type: text/plain; charset="utf-8"
+
+There is no Message-ID header here.

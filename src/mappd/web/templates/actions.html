@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Actions{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Outbox</p>
+    <h1>Actions</h1>
+  </div>
+</div>
+<nav class="tabs">
+  {% for s in statuses %}<a href="/actions?status={{ s }}" {% if s == status %}aria-current="page"{% endif %}>{{ s }}</a> {% endfor %}
+</nav>
+{% if status == "unknown" %}
+<p class="muted">An unknown action may or may not have reached its receiver. Check with the receiver, then
+settle it: <strong>took effect</strong> finishes its case without sending again, <strong>not sent</strong>
+sends it again. Either way its workflow is retried, so the case moves on.</p>
+{% if user %}<input type="hidden" id="operator" name="operator" value="{{ user }}">
+{% else %}<p class="dispatcher"><label>Your name <input id="operator" name="operator" placeholder="who checked" required></label></p>{% endif %}
+{% endif %}
+<div class="table-wrap">
+<table class="actions">
+  <thead><tr><th>action</th><th>status</th><th>case</th><th class="num">attempts</th><th>changed</th><th></th></tr></thead>
+  <tbody>{% for v in views %}{% with a=v.a, case=v.case, summary=v.summary %}{% include "action_row.html" %}{% endwith %}{% else %}<tr><td class="empty" colspan="6">Nothing here.</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+{% if more %}<p><a href="/actions?status={{ status }}&amp;limit={{ more }}">Show more</a></p>{% endif %}
+{% endblock %}

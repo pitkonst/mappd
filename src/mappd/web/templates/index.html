@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">MAPP-D</p>
+    <h1>Processes</h1>
+  </div>
+  <a href="/ops">Operations →</a>
+</div>
+<div class="stats">
+  {% for name in request.app.state.processes %}
+  {% set p = ops.get(name) %}
+  {% set d = (request.app.state.dashboards | default({})).get(name) %}
+  <a class="stat" href="/{{ name }}">
+    <div class="label">{{ name }}</div>
+    {% if p %}<div class="value">{{ p.waiting }}</div><small>waiting for a person{% if p.stuck %} · <span class="badge bad">{{ p.stuck }} stuck</span>{% endif %}</small>{% else %}<small>open the queue</small>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% for name in request.app.state.processes %}{% set d = (request.app.state.dashboards | default({})).get(name) %}{% if d %}<a href="{{ d }}">{{ name }} trust dashboard</a> · {% endif %}{% endfor %}<a href="/workflows">workflows</a> · <a href="/actions">actions</a>{% if outbox.unknown %} <span class="badge warn">{{ outbox.unknown }} unknown</span>{% endif %}
+{% endblock %}

@@ -1,0 +1,76 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+# Real models through OpenRouter (OpenAI-compatible). The key comes from .env (OPENROUTER_API_KEY);
+# keys live only here, never in the app. Open-weight models with OSI licenses only (Apache-2.0 or
+# MIT on their Hugging Face cards, checked 2026-10-13); four families so the writer, the checker
+# and the judge never share the solver's family:
+#   solver DeepSeek (fast, smart) · writer Qwen (synth) · checker gpt-oss (check) · embed Qwen
+frontendPolicies:
+  tracing:
+    host: mlflow:5000
+    protocol: http
+    path: /v1/traces
+    clientSampling: "true"
+    policies:
+      requestHeaderModifier:
+        set:
+          # MLflow needs the experiment as a header; 0 is the Default experiment.
+          x-mlflow-experiment-id: "0"
+# `defaults` are OpenRouter request fields added when the caller sends none: no host that trains on
+# prompts, and reasoning only where it pays (the writer took ~4 min per email with it on).
+llm:
+  port: 4000
+  models:
+  - name: fast
+    provider: openAI
+    params: {model: deepseek/deepseek-v4.1-flash, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}}
+  - name: smart
+    provider: openAI
+    params: {model: deepseek/deepseek-v4-pro-0813, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}}
+  - name: embed
+    provider: openAI
+    params: {model: qwen/qwen3-embedding-4b, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}}
+  # Synthetic data (mappd data synth): the writer and the checker.
+  - name: synth
+    provider: openAI
+    params: {model: qwen/qwen3.5-397b-a17b, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}, reasoning: {enabled: false}}
+  - name: check
+    provider: openAI
+    params: {model: openai/gpt-oss-120b, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}, reasoning: {effort: medium}}
+  # Evals (mappd eval run): the judge, a family different from the solver, writer and checker.
+  - name: judge
+    provider: openAI
+    params: {model: z-ai/glm-5.1, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}}
+  # Installation: photos from technicians. Qwen3.6-27B, Apache-2.0
+  # (https://huggingface.co/Qwen/Qwen3.6-27B, image-text-to-text, checked 2026-10-16).
+  # The simulated technician of the installation evals: the same model as smart.
+  - name: simulator
+    provider: openAI
+    params: {model: deepseek/deepseek-v4-pro-0813, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}}
+  - name: vision
+    provider: openAI
+    params: {model: qwen/qwen3.6-27b, baseUrl: https://openrouter.ai/api/v1, apiKey: $OPENROUTER_API_KEY}
+    defaults: {provider: {data_collection: deny}}
+
+# The installation systems' MCP servers (warehouse, logistics, tickets, contacts), multiplexed
+# into one virtual server at :3000/mcp. Tool names are unique across them, so no prefixes.
+# $MAPPD_MOCK_MCP_URL: http://mock-mcp:9400 in the full stack;
+# http://host.docker.internal:9400 when the mock runs on the host (mappd mock mcp).
+mcp:
+  port: 3000
+  prefixMode: never
+  targets:
+  - name: warehouse
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/warehouse/mcp"}
+  - name: logistics
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/logistics/mcp"}
+  - name: tickets
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/tickets/mcp"}
+  - name: contacts
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/contacts/mcp"}

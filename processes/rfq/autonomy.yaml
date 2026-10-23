@@ -1,0 +1,12 @@
+# Autonomy policy of the RFQ process, reviewed like code: a change ships with a deploy.
+# Edit with `mappd process shadow rfq on|off` and `mappd process autonomy rfq <outcome> auto|review`.
+# Escalations (custom work, totals above the threshold) always go to a person.
+shadow: false          # true: decisions are recorded, nothing is sent
+default: review
+categories:
+  quote: review
+  clarify: review
+ready:                 # when the dashboard calls an outcome ready for auto
+  without_edits: 0.9
+  false_escalations_max: 0.1
+  min_cases: 30

@@ -1,0 +1,20 @@
+<div id="live">
+  <p>State <span class="badge {{ {'blocked': 'bad', 'handed_over': 'ok'}.get(job.state, 'info') }}">{{ job.state | replace("_", " ") }}</span>{% if job.blocked_reason %} — {{ job.blocked_reason | replace("_", " ") }} (from {{ job.blocked_from | replace("_", " ") }}){% endif %}
+    {% if job.overdue %} · overdue: {{ job.overdue | join(", ") }}{% endif %}
+    {% if job.taken_over_by %} · held by {{ job.taken_over_by }}{% endif %}</p>
+  <ol class="timeline">
+  {% for e in entries %}
+    {% if e.kind == "message" %}
+    <li class="message {{ 'in' if e.actor == 'installer' else 'out' }}">
+      <small>{{ e.at | utc("%H:%M") }} · {{ e.actor }}</small>
+      <p>{{ e.text or "" }}</p>
+      {% if e.photo %}<img src="/api/v1/installation/jobs/{{ job.external_id }}/photos/{{ e.photo }}" alt="{{ e.photo_description or 'photo' }}" width="240"><p><small>{{ e.photo_description or "" }}</small></p>{% endif %}
+    </li>
+    {% else %}
+    <li class="event"><small>{{ e.at | utc("%H:%M") }} · {{ e.actor }} · <strong>{{ e.event | replace("_", " ") }}</strong></small>
+      {% for k, v in e.data.items() if v is not none and v != "" and k != "id" and not (k == "deadline" and v is number) %}<span class="kv"><span>{{ k | replace("_", " ") }}</span> {{ v | brief }}</span>{% endfor %}
+    </li>
+    {% endif %}
+  {% endfor %}
+  </ol>
+</div>

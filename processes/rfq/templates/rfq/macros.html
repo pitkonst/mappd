@@ -1,0 +1,10 @@
+{% macro status(value) -%}
+{# approved = the send is not confirmed (it failed or its outcome is unknown); shadowed = never sent #}
+{% set tone = {"awaiting_approval": "info", "escalated": "warn", "approved": "bad", "failed": "bad", "sent": "ok", "resolved": "ok", "shadowed": "warn"} -%}
+{% set label = {"approved": "not confirmed sent", "shadowed": "shadow: not sent"}.get(value, value | replace("_", " ")) -%}
+<span class="badge {{ tone.get(value, '') }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro outcome(value) -%}
+<span class="badge {{ {'quote': 'ok', 'clarify': 'info', 'escalate': 'warn'}.get(value, '') }}">{{ value }}</span>
+{%- endmacro %}

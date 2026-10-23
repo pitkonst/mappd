@@ -1,0 +1,7 @@
+# Metrics and thresholds for $name.
+# Each metric compares a field of ${Name}Result with the labelled case.
+metrics:
+  - name: outcome_accuracy
+    kind: exact_match
+    field: outcome
+    threshold: 0.9

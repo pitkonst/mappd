@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% from "support/macros.html" import verdict %}
+{% block title %}Support dashboard{% endblock %}
+{% macro rate(value) %}{% if value is none %}—{% else %}{{ "%.0f"|format(value * 100) }}%{% endif %}{% endmacro %}
+{% macro cases(n, status, category, decision=None) %}<a href="/support?status={{ status }}{% if category != "all" %}&amp;category={{ category }}{% endif %}{% if decision %}&amp;decision={{ decision }}{% endif %}">{{ n }}</a>{% endmacro %}
+{% block content %}
+<a class="back" href="/support">← queue</a>
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Support · last {{ report.days }} days</p>
+    <h1>Can we trust the automation more than yesterday?</h1>
+  </div>
+  <a href="{{ mlflow }}">Traces and token cost in MLflow →</a>
+</div>
+<div class="stats">
+  <div class="stat"><div class="label" title="the draft approved as written, by a person (shadowed or sent) or by auto; delivery is not part of it">approved without edits</div><div class="value">{{ rate(report.total.without_edits_rate) }}</div><small>{{ cases(report.total.without_edits, "all", "all", "unedited") }} of {{ report.total.proposals }} decided</small></div>
+  <div class="stat"><div class="label">false escalations</div><div class="value">{{ rate(report.total.false_escalation_rate) }}</div><small>{{ cases(report.total.false_escalations, "resolved", "all", "false_escalation") }} of {{ cases(report.total.resolutions, "resolved", "all") }} resolved</small></div>
+  <div class="stat"><div class="label">decided automatically</div><div class="value">{{ cases(report.total.auto, "all", "all", "auto") }}</div><small>of {{ report.total.proposals }} decided</small></div>
+</div>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>category</th><th>level</th><th class="num">decided</th><th class="num">auto</th><th class="num">approved without edits</th><th class="num">resolved escalations</th><th class="num">false escalations</th><th>verdict</th></tr></thead>
+  <tbody>
+  {% for c in report.categories %}
+  <tr>
+    <td><strong>{{ c.category }}</strong></td>
+    <td><span class="badge{% if c.level == 'auto' %} info{% endif %}">{{ c.level }}</span></td>
+    <td class="num">{{ c.proposals }}</td>
+    <td class="num">{{ cases(c.auto, "all", c.category, "auto") }}</td>
+    <td class="num">{{ rate(c.without_edits_rate) }} <small>({{ cases(c.without_edits, "all", c.category, "unedited") }})</small></td>
+    <td class="num">{{ cases(c.resolutions, "resolved", c.category) }}</td>
+    <td class="num">{{ rate(c.false_escalation_rate) }} <small>({{ cases(c.false_escalations, "resolved", c.category, "false_escalation") }})</small></td>
+    <td>{{ verdict(c.verdict) }}{% if c.command %}<br><code>{{ c.command }}</code>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td class="empty" colspan="8">No decisions in this window yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

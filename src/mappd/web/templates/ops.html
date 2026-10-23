@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+{% block title %}Operations{% endblock %}
+{% block content %}
+<h1>Operations</h1>
+<p>Cases waiting for a person, cases stuck in a passing status, actions and workflows to look
+at. Eval metrics and LLM errors are in MLflow.</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>process</th><th>waiting</th><th>oldest waiting since</th><th>stuck</th></tr></thead>
+  <tbody>
+  {% for p in report.processes %}
+  <tr>
+    <td><a href="/{{ p.process }}">{{ p.process }}</a></td>
+    <td><a href="/{{ p.process }}">{{ p.waiting }}</a></td>
+    <td>{{ p.oldest_waiting | utc }}</td>
+    <td>{{ p.stuck }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4">No process declares its cases.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% set stuck = report.processes | selectattr("stuck") | list %}
+{% if stuck %}
+<h2>Stuck cases</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>process</th><th>case</th><th>status</th><th>since</th></tr></thead>
+  <tbody>
+  {% for p in stuck %}{% for c in p.stuck_cases %}
+  <tr>
+    <td>{{ p.process }}</td>
+    <td><a href="{{ c.link }}"><code>{{ c.key }}</code></a></td>
+    <td>{{ c.status }}</td>
+    <td>{{ c.since | utc }}</td>
+  </tr>
+  {% endfor %}{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<h2>Outbox</h2>
+<div class="table-wrap">
+<table>
+  <tbody>
+    <tr><td>unknown actions (settle by hand)</td><td><a href="/actions?status=unknown">{{ report.outbox.unknown }}</a></td></tr>
+    <tr><td>failed actions</td><td><a href="/actions?status=failed">{{ report.outbox.failed }}</a></td></tr>
+    <tr><td>webhooks being redelivered</td><td><a href="/actions?status=failed">{{ report.outbox.webhooks_redelivering }}</a></td></tr>
+    <tr><td>webhooks given up</td><td><a href="/actions?status=failed">{{ report.outbox.webhooks_given_up }}</a></td></tr>
+  </tbody>
+</table>
+</div>
+{% if report.workflows %}
+<h2>Workflows</h2>
+<div class="table-wrap">
+<table>
+  <tbody>
+    <tr><td>failed in the last 24 hours (retry or fork)</td><td><a href="/workflows?status=ERROR&amp;window=24h">{{ report.workflows.failed }}</a></td></tr>
+    <tr><td>stranded (no running version finishes them)</td><td><a href="/workflows?status=stranded">{{ report.workflows.stranded }}</a></td></tr>
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

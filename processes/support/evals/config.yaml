@@ -1,0 +1,34 @@
+# Metrics and thresholds for support.
+# `field` points into the case's expected labels; the eval compares it with the same name in the
+# process output (`output:` when it lives elsewhere). `when` selects cases by expected labels.
+metrics:
+  - name: routing_accuracy
+    kind: exact_match
+    field: expected.route
+    threshold: 0.8
+  - name: outcome_accuracy
+    kind: exact_match
+    field: expected.outcome
+    threshold: 0.8
+  - name: escalation_role_accuracy
+    kind: exact_match
+    field: expected.escalate_to
+    when: {outcome: escalate}
+    threshold: 0.7
+  - name: citations_f1
+    kind: set_f1
+    field: expected.citations
+    output: draft.citations
+    when: {outcome: reply}
+    threshold: 0.6
+  - name: false_escalation_rate
+    kind: rate
+    output: outcome
+    equals: escalate
+    when: {outcome: [reply, clarify]}
+    threshold: 0.15
+    lower_is_better: true
+  - name: judge_pass_rate
+    kind: judge
+    when: {outcome: [reply, clarify]}
+    threshold: 0.7

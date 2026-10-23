@@ -1,0 +1,14 @@
+"""Domain logic of the $name process: pure functions with no knowledge of the runtime."""
+
+from .schemas import ${Name}Input, ${Name}Result
+
+# A hard rule is code, not a prompt (AGENTS.md, rule 6).
+ALWAYS_ESCALATE = frozenset({"refund"})
+
+
+def decide(case: ${Name}Input) -> ${Name}Result:
+    """Escalate cases that hit a hard rule; propose the rest for approval."""
+    hits = sorted(set(case.text.lower().split()) & ALWAYS_ESCALATE)
+    if hits:
+        return ${Name}Result(outcome="escalated", reason=f"hard rule: {hits[0]}")
+    return ${Name}Result(outcome="proposed", reason="no hard rule applies")

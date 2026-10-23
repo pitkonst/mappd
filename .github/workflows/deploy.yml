@@ -1,0 +1,57 @@
+name: Deploy
+
+# Manual deploys only: pick the environment and give the SHA to deploy.
+# An example: it stays skipped until the repository variable DEPLOY_ENABLED is true.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [staging, prod]
+        required: true
+      sha:
+        description: "Commit to deploy (an older SHA is a rollback)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # An example: it runs only in a repo that opts in with the repository variable
+    # DEPLOY_ENABLED=true. A repository variable, not an environment one: a job-level `if`
+    # is evaluated before the job attaches its environment.
+    if: vars.DEPLOY_ENABLED == 'true'
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    env:
+      # Environment-scoped vars/secrets: DEPLOY_HOST per environment.
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_SHA: ${{ inputs.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # deploy.sh resolves and archives the SHA from git
+      - name: Install the SSH key and known hosts
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Deploy
+        env:
+          MAPPD_DEPLOY_REGISTRY: ghcr.io/${{ github.repository_owner }}
+        run: |
+          # GHCR namespaces are lowercase; inputs reach the shell only via env vars.
+          MAPPD_DEPLOY_REGISTRY=$(echo "$MAPPD_DEPLOY_REGISTRY" | tr '[:upper:]' '[:lower:]')
+          export MAPPD_DEPLOY_REGISTRY
+          deploy/deploy.sh "$DEPLOY_HOST" "$DEPLOY_SHA"

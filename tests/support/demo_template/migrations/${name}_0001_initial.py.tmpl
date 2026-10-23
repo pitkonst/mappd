@@ -1,0 +1,43 @@
+"""The $name cases table: business state lives here, not in DBOS."""
+
+from collections.abc import Sequence
+
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.dialects.postgresql import JSONB
+
+revision: str = "${name}_0001"
+down_revision: str | Sequence[str] | None = None
+branch_labels: str | Sequence[str] | None = ("$name",)
+depends_on: str | Sequence[str] | None = "mappd_0001"
+
+
+def upgrade() -> None:
+    """Create the cases table."""
+    op.create_table(
+        "${name}_cases",
+        sa.Column("id", sa.BigInteger, primary_key=True),
+        sa.Column("external_id", sa.Text, nullable=False),
+        sa.Column("status", sa.Text, nullable=False, server_default="new"),
+        sa.Column("payload", JSONB, nullable=False),
+        sa.Column("output", JSONB),
+        sa.Column("version", sa.Integer, nullable=False, server_default="0"),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.UniqueConstraint("external_id"),
+    )
+
+
+def downgrade() -> None:
+    """Drop the cases table."""
+    op.drop_table("${name}_cases")

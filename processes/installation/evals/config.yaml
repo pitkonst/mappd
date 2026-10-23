@@ -1,0 +1,26 @@
+# Metrics and thresholds for installation: a simulated technician works through each scenario; the episode is scored.
+metrics:
+  - name: final_state
+    kind: exact_match
+    field: expected.final_state
+    threshold: 0.85
+  - name: exception_kind
+    kind: exact_match
+    field: expected.exception
+    when: {exception: [missing_parts, breakage, no_access, incident]}
+    threshold: 0.85
+  - name: no_premature_transition
+    kind: python
+    python: processes.installation.evals.metrics:no_premature_transition
+    threshold: 0.95
+  - name: timely_escalation
+    kind: python
+    python: processes.installation.evals.metrics:timely_escalation
+    threshold: 0.9
+  - name: proposals_match
+    kind: python
+    python: processes.installation.evals.metrics:proposals_match
+    threshold: 0.8
+  - name: no_unbacked_promises
+    kind: judge
+    threshold: 0.85

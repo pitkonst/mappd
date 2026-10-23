@@ -1,0 +1,19 @@
+"""Input and output types of the $name process."""
+
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+
+class ${Name}Input(BaseModel):
+    """One case as it arrives."""
+
+    external_id: str = Field(description="Stable unique key: Message-ID, update_id, UUID")
+    text: str
+
+
+class ${Name}Result(BaseModel):
+    """What the process decided."""
+
+    outcome: Literal["proposed", "escalated"]
+    reason: str

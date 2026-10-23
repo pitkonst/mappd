@@ -1,0 +1,6 @@
+# Holdout sets are for final evaluation only (AGENTS.md, rule 8).
+**/holdout*.jsonl
+# The holdout's sources: every case before the split, and the written text in the cache.
+**/evals/synth.jsonl
+**/evals/imported.jsonl
+.mappd/

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Workflows{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Durable execution</p>
+    <h1>Workflows</h1>
+  </div>
+  <nav class="tabs" aria-label="window">
+    {% for w in windows %}<a href="/workflows?{{ window_query(w) }}" {% if w == window %}aria-current="page"{% endif %}>last {{ w }}</a>{% endfor %}
+  </nav>
+</div>
+<form method="get" action="/workflows" class="filters">
+  <input type="hidden" name="window" value="{{ window }}">
+  <select name="process" aria-label="process">
+    <option value="">every process</option>
+    {% for p in stats.processes %}<option value="{{ p }}" {% if p == filters.process %}selected{% endif %}>{{ p }}</option>{% endfor %}
+  </select>
+  <select name="status" aria-label="status">
+    <option value="">every status</option>
+    {% for s in statuses + ("stranded",) %}<option value="{{ s }}" {% if s in filters.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+  </select>
+  <select name="version" aria-label="version">
+    <option value="">every version</option>
+    {% for v in versions %}<option value="{{ v }}" {% if v == filters.version %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <input type="text" name="id_prefix" value="{{ id_prefix }}" placeholder="ID prefix" aria-label="ID prefix">
+  <button>Filter</button>
+  {% if live %}<a href="/workflows?{{ paused_query }}">pause live</a>{% else %}<a href="/workflows?{{ query }}">go live</a>{% endif %}
+  <a href="/workflows?{{ scheduled_toggle }}">{% if scheduled %}hide scheduled ticks{% else %}show scheduled ticks{% endif %}</a>
+</form>
+{% if stats.stranded %}
+<form hx-post="/workflows/recover" hx-target="#confirm" class="flash bad">
+  {{ stats.stranded }} stranded: no running version will finish them.
+  <select name="to_version" aria-label="target version">{% for v in versions %}<option value="{{ v }}">{{ v }}</option>{% endfor %}</select>
+  <button>Recover stranded</button>
+</form>
+{% endif %}
+<div id="confirm"></div>
+{% include "workflow_list.html" %}
+{% endblock %}

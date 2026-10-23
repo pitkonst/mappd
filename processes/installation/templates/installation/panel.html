@@ -1,0 +1,45 @@
+<section id="job-panel">
+  <div class="page-head">
+    <div>
+      <h1>Job <code>{{ job.external_id }}</code></h1>
+      <div class="meta"><span>{{ job.site }}</span><span>{{ job.installer_name }}</span><span>{{ job.skus | join(", ") }}</span><span>version {{ job.version }}</span></div>
+    </div>
+  </div>
+  {% if job.deep_link %}<p class="flash bad">{{ job.installer_name }} has not linked Telegram yet. Send them this link: <a href="{{ job.deep_link }}"><code>{{ job.deep_link }}</code></a></p>{% endif %}
+  {% if error %}<p class="flash bad" role="alert">{{ error }}</p>{% endif %}
+
+  {% set base = "/installation/jobs/" ~ job.external_id %}
+  {% set common = 'hx-target="#job-panel" hx-swap="outerHTML" hx-include="#operator"' %}
+  <div class="actions">
+    {% if job.taken_over_by %}
+    <form hx-post="{{ base }}/release" {{ common | safe }}><input type="hidden" name="version" value="{{ job.version }}"><button>Release</button></form>
+    {% else %}
+    <form hx-post="{{ base }}/takeover" {{ common | safe }}><input type="hidden" name="version" value="{{ job.version }}"><button>Take over</button></form>
+    {% endif %}
+    {% if job.state == "blocked" %}
+    <form hx-post="{{ base }}/unblock" {{ common | safe }}><input type="hidden" name="version" value="{{ job.version }}"><button>Unblock</button></form>
+    {% elif job.state != "handed_over" %}
+    <form hx-post="{{ base }}/advance" {{ common | safe }}><input type="hidden" name="version" value="{{ job.version }}"><button>Advance one step</button></form>
+    {% endif %}
+  </div>
+
+  {% for p in job.proposals %}
+  <div class="proposal">
+    <p><strong>{{ p.tool | replace("_", " ") | capitalize }}</strong>: {{ p.arguments | brief }}<br><small>{{ p.reason }}</small> <span class="badge {{ {'pending': 'warn', 'done': 'ok', 'failed': 'bad', 'rejected': '', 'withdrawn': ''}.get(p.status, 'info') }}">{{ p.status }}</span>{% if p.decided_by %} <small>by {{ p.decided_by }}</small>{% endif %}</p>
+    {% if p.status == "pending" %}
+    <form hx-post="{{ base }}/proposals/{{ p.id }}/confirm" {{ common | safe }}><button>Confirm</button></form>
+    <form hx-post="{{ base }}/proposals/{{ p.id }}/reject" {{ common | safe }}><input name="note" placeholder="why not"><button>Reject</button></form>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  {% include "installation/live.html" %}
+
+  {% if job.taken_over_by %}
+  <form hx-post="{{ base }}/messages" {{ common | safe }}>
+    <input type="hidden" name="key" value="{{ send_key }}">
+    <textarea name="text" required placeholder="Message to the installer"></textarea>
+    <button>Send</button>
+  </form>
+  {% endif %}
+</section>

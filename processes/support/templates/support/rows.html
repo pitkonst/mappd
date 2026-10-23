@@ -1,0 +1,14 @@
+{% from "support/macros.html" import status %}
+{% for t in tickets %}
+<tr>
+  <td>{{ status(t.status) }}{% if t.decision %} <small>by {{ t.decision.operator }}{% if t.decision.edited_reply %} · edited{% endif %}{% if t.decision.agent_could_handle and not t.decision.prior %} · false escalation{% endif %}</small>{% endif %}</td>
+  <td><a href="/support/tickets/{{ t.external_id | urlencode }}">{{ t.subject }}</a><br><small class="key">{{ t.external_id }}</small></td>
+  <td class="wide">{{ t.sender }}</td>
+  <td class="wide">{% if t.output %}<span class="badge">{{ t.output.topic }}</span>{% endif %}</td>
+  {% set team = (t.decision.corrected.escalate_to if t.decision else none) or (t.output.escalate_to if t.output else none) %}
+  <td class="wide">{% if team %}{{ team }}{% elif t.output %}<small>{{ t.output.route }}</small>{% endif %}</td>
+  <td class="nowrap wide">{{ t.created_at | utc("%Y-%m-%d", label=False) }}<br><small>{{ t.created_at | utc("%H:%M") }}</small></td>
+</tr>
+{% else %}
+<tr><td class="empty" colspan="6">Nothing here.</td></tr>
+{% endfor %}

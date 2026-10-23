@@ -1,0 +1,27 @@
+<div class="table-wrap">
+<table>
+  <thead><tr><th class="num">#</th><th>step</th><th>kind</th><th>started (UTC)</th><th class="num">took</th><th>timeline</th><th>result</th><th></th></tr></thead>
+  <tbody>
+  {% for s in w.steps %}
+  {% set bar = bars[loop.index0] %}
+  {% set ref = s.outbox %}
+  <tr>
+    <td class="num">{{ s.function_id }}</td>
+    <td>{% if s.child_workflow_id %}<a href="{{ link(s.child_workflow_id) }}">{{ s.name }}</a>{% else %}{{ s.name }}{% endif %}
+      {% if ref %}<br><small><code class="id">{{ ref.idempotency_key }}</code> {{ ref.status }}</small>{% endif %}</td>
+    <td>{{ s.kind }}</td>
+    <td class="nowrap">{{ s.started_at | utc("%H:%M:%S") }}</td>
+    <td class="num">{% if s.duration_ms is not none %}{{ s.duration_ms }} ms{% endif %}</td>
+    <td class="timeline">{% if bar %}<span class="bar" style="left: {{ bar[0] }}%; width: {{ bar[1] }}%"></span>{% endif %}</td>
+    <td>{% if s.error %}<details><summary class="error">{{ s.error.splitlines()[0][:80] }}</summary><pre>{{ s.error }}</pre></details>
+      {% elif not w.payloads %}<span class="muted">ok</span>
+      {% elif s.output %}<details><summary>ok</summary><pre>{{ s.output.text }}</pre></details>
+      {% else %}ok{% endif %}</td>
+    <td class="nowrap">{% if finished %}<button hx-get="{{ link(w.workflow_id) }}/confirm/fork?step={{ s.function_id }}" hx-target="#confirm">Fork from here</button>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="empty">no steps recorded</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>

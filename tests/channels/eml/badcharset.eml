@@ -1,0 +1,9 @@
+From: dan@example.com
+To: support@mappd.test
+Subject: Broken charset
+Message-ID: <bad-1@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="x-unknown"
+Content-Transfer-Encoding: 8bit
+
+Hello ÿþ world

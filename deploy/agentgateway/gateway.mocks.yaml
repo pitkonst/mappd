@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+# Deterministic mocks instead of providers: no keys, for demos and the acceptance tests.
+frontendPolicies:
+  tracing:
+    host: mlflow:5000
+    protocol: http
+    path: /v1/traces
+    clientSampling: "true"
+    policies:
+      requestHeaderModifier:
+        set:
+          # MLflow needs the experiment as a header; 0 is the Default experiment.
+          x-mlflow-experiment-id: "0"
+llm:
+  port: 4000
+  # $MAPPD_MOCK_LLM_URL: http://mock-llm:9000/v1 in the full stack;
+  # http://host.docker.internal:9000/v1 when the mock runs on the host (mappd mock llm).
+  models:
+  - name: fast
+    provider: openAI
+    params: {model: mock-fast, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: smart
+    provider: openAI
+    params: {model: mock-smart, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: embed
+    provider: openAI
+    params: {model: mock-embed, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: synth
+    provider: openAI
+    params: {model: mock-synth, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: check
+    provider: openAI
+    params: {model: mock-check, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: judge
+    provider: openAI
+    params: {model: mock-judge, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: simulator
+    provider: openAI
+    params: {model: mock-simulator, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+  - name: vision
+    provider: openAI
+    params: {model: mock-vision, baseUrl: $MAPPD_MOCK_LLM_URL, apiKey: synthetic-test-key}
+
+# The installation systems' MCP servers (warehouse, logistics, tickets, contacts), multiplexed
+# into one virtual server at :3000/mcp. Tool names are unique across them, so no prefixes.
+# $MAPPD_MOCK_MCP_URL: http://mock-mcp:9400 in the full stack;
+# http://host.docker.internal:9400 when the mock runs on the host (mappd mock mcp).
+mcp:
+  port: 3000
+  prefixMode: never
+  targets:
+  - name: warehouse
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/warehouse/mcp"}
+  - name: logistics
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/logistics/mcp"}
+  - name: tickets
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/tickets/mcp"}
+  - name: contacts
+    mcp: {host: "$MAPPD_MOCK_MCP_URL/contacts/mcp"}

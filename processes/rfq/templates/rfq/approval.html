@@ -1,0 +1,10 @@
+{% if state == "sent" %}<p class="flash ok">Sent.</p>
+{% elif state == "escalated" %}<p class="flash ok">Escalated to {{ decision.escalate_to }}.</p>
+{% elif state == "resolved" %}<p class="flash ok">Resolved{% if decision.agent_could_handle %} — marked as a false escalation{% endif %}.</p>
+{% elif state == "shadowed" %}<p class="flash ok">Recorded (shadow mode): nothing was sent.</p>
+{% elif state == "repeated" %}<p class="flash ok">{% if kind == "approve" %}Already sent — this decision was applied before; nothing new went out.{% else %}Already done — this decision was applied before; nothing new happened.{% endif %}</p>
+{% elif state == "changed" %}<p class="flash bad">The ticket changed (now version {{ current_version }}, {{ status }}). <a href="/rfq/requests/{{ external_id | urlencode }}">Reload</a> before deciding.</p>
+{% elif state == "mismatch" %}<p class="flash bad">This form was already submitted with a different reply. <a href="/rfq/requests/{{ external_id | urlencode }}">Reload</a> to decide again.</p>
+{% elif state == "failed" %}<p class="flash bad">Sending did not complete: the reply is not confirmed sent. Settle it under <a href="/actions?status=unknown">unknown</a> or <a href="/actions?status=failed">failed</a> actions; settling retries <a href="/workflows/{{ workflow_id | urlencode }}">its workflow</a> and finishes the case.</p>
+{% elif state == "invalid" %}<p class="flash bad">Check the highlighted fields.</p>{{ form }}
+{% endif %}

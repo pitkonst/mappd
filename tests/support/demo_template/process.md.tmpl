@@ -1,0 +1,29 @@
+# $name
+
+What this process automates, for whom, and what "done" means. Keep it current: coding agents
+read it before changing the process.
+
+## Input
+
+`${Name}Input` in `schemas.py`: one case as it arrives (an email, a form, a message).
+
+## Decisions
+
+`${Name}Result` in `schemas.py`. List each decision and who made it before.
+
+## Data ownership
+
+The system of record for each entity this process touches. MAPP-D owns the case's state and its `output`; external entities are kept as an ID plus the input snapshot (`payload`) and changed only through actions.
+
+## Hard rules
+
+Rules that are code, not prompts (AGENTS.md, rule 6): `ALWAYS_ESCALATE` in `domain.py`.
+
+## Actions
+
+Side effects, each an `@action` with its idempotency key (AGENTS.md, rule 2). None yet.
+
+## Evals
+
+`evals/config.yaml` declares metrics and thresholds; `evals/dev.jsonl` holds labelled cases.
+The holdout set lives outside the repository.

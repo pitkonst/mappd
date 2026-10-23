@@ -1,0 +1,15 @@
+"""The $name process."""
+
+from pathlib import Path
+
+from mappd.process import Process
+
+from .api import router
+from .workflow import run
+
+process = Process(
+    name="$name",
+    router=router,
+    ingest=run,
+    migrations_dir=Path(__file__).parent / "migrations",
+)

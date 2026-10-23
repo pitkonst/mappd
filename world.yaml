@@ -1,0 +1,244 @@
+# The fictional world of the MAPP-D demos. Curated and reviewed like
+# code; mappd.data expands it with a seed into customers, sites and orders. Everything is invented.
+company:
+  name: Helio Building Systems
+  description: >-
+    Distributor and installer of smart-building equipment: controllers, sensors, cameras and
+    cabinets. A commercial side (sales, billing, logistics) and a technical side (pre-sales,
+    installation, service).
+  languages: [en, de]
+
+roles:
+  - {id: sales, name: Sales team, handles: [refunds, complaints, discounts]}
+  - {id: billing, name: Billing, handles: [invoices, payment terms, credit notes]}
+  - {id: logistics, name: Logistics, handles: [deliveries, returns, address changes]}
+  - {id: presales, name: Pre-sales engineering, handles: [custom quotes, integrations, project design]}
+  - {id: installation, name: Installation team, handles: [appointments, on-site work]}
+  - {id: service, name: Service desk, handles: [safety faults, warranty repairs, field service]}
+
+policies:
+  - {id: refund-window, text: Unused equipment can be returned for a refund within 30 days of delivery.}
+  - {id: delivery-times, text: Stock items ship within 2 business days; custom cabinets take 3 weeks.}
+  - {id: warranty, text: All devices carry a 24-month warranty; batteries 12 months.}
+  - {id: payment-terms, text: Invoices are issued on shipment and due within 30 days.}
+
+catalog:
+  - {sku: CTL-H200, family: controller, name: Helio Hub 200, price_eur: 420.0, lead_days: 2}
+  - {sku: CTL-H400, family: controller, name: Helio Hub 400, price_eur: 690.0, lead_days: 2}
+  - {sku: CTL-H800, family: controller, name: Helio Hub 800 Pro, price_eur: 1150.0, lead_days: 5}
+  - {sku: CTL-E10, family: controller, name: Edge Relay E10, price_eur: 185.0, lead_days: 2}
+  - {sku: CTL-E20, family: controller, name: Edge Relay E20, price_eur: 240.0, lead_days: 2}
+  - {sku: CTL-GW1, family: controller, name: BACnet Gateway GW1, price_eur: 560.0, lead_days: 7}
+  - {sku: CTL-DIN, family: controller, name: DIN Rail Controller D4, price_eur: 310.0, lead_days: 3}
+  - {sku: CTL-ZB1, family: controller, name: Zigbee Bridge ZB1, price_eur: 95.0, lead_days: 2}
+  - {sku: SEN-T100, family: sensor, name: Temperature Sensor T100, price_eur: 48.0, lead_days: 2}
+  - {sku: SEN-T200, family: sensor, name: Temperature and Humidity Sensor T200, price_eur: 64.0, lead_days: 2}
+  - {sku: SEN-C300, family: sensor, name: CO2 Sensor C300, price_eur: 129.0, lead_days: 2}
+  - {sku: SEN-M110, family: sensor, name: Motion Sensor M110, price_eur: 39.0, lead_days: 2}
+  - {sku: SEN-D50, family: sensor, name: Door Contact D50, price_eur: 22.0, lead_days: 2}
+  - {sku: SEN-W20, family: sensor, name: Water Leak Sensor W20, price_eur: 35.0, lead_days: 2}
+  - {sku: SEN-L70, family: sensor, name: Light Level Sensor L70, price_eur: 41.0, lead_days: 2}
+  - {sku: SEN-S90, family: sensor, name: Fire Detector S90, price_eur: 58.0, lead_days: 3}
+  - {sku: SEN-P30, family: sensor, name: Occupancy Sensor P30, price_eur: 72.0, lead_days: 2}
+  - {sku: SEN-V12, family: sensor, name: Vibration Sensor V12, price_eur: 88.0, lead_days: 4}
+  - {sku: CAM-D2, family: camera, name: Dome Camera D2, price_eur: 210.0, lead_days: 3}
+  - {sku: CAM-D4, family: camera, name: Dome Camera D4 Night, price_eur: 290.0, lead_days: 3}
+  - {sku: CAM-B6, family: camera, name: Bullet Camera B6, price_eur: 330.0, lead_days: 3}
+  - {sku: CAM-B8, family: camera, name: Bullet Camera B8 Long Range, price_eur: 480.0, lead_days: 5}
+  - {sku: CAM-F1, family: camera, name: Fisheye Camera F1, price_eur: 360.0, lead_days: 5}
+  - {sku: CAM-PTZ, family: camera, name: PTZ Camera Z9, price_eur: 890.0, lead_days: 10}
+  - {sku: CAM-NVR8, family: camera, name: Network Recorder NVR8, price_eur: 640.0, lead_days: 5}
+  - {sku: CAM-NVR16, family: camera, name: Network Recorder NVR16, price_eur: 980.0, lead_days: 7}
+  - {sku: CAB-W40, family: cabinet, name: Wall Cabinet W40, price_eur: 260.0, lead_days: 5}
+  - {sku: CAB-W60, family: cabinet, name: Wall Cabinet W60, price_eur: 340.0, lead_days: 5}
+  - {sku: CAB-F120, family: cabinet, name: Floor Cabinet F120, price_eur: 780.0, lead_days: 21}
+  - {sku: CAB-F180, family: cabinet, name: Floor Cabinet F180, price_eur: 1040.0, lead_days: 21}
+  - {sku: CAB-OUT, family: cabinet, name: Outdoor Cabinet IP66, price_eur: 920.0, lead_days: 21}
+  - {sku: CAB-PDU, family: cabinet, name: Cabinet Power Strip P8, price_eur: 75.0, lead_days: 2}
+  - {sku: ACC-PSU24, family: accessory, name: Power Supply 24V, price_eur: 55.0, lead_days: 2}
+  - {sku: ACC-POE8, family: accessory, name: PoE Switch 8-Port, price_eur: 165.0, lead_days: 2}
+  - {sku: ACC-BAT, family: accessory, name: Backup Battery Pack, price_eur: 120.0, lead_days: 3}
+  - {sku: ACC-MNT, family: accessory, name: Ceiling Mount Kit, price_eur: 18.0, lead_days: 2}
+  - {sku: ACC-CBL, family: accessory, name: Bus Cable 100m, price_eur: 70.0, lead_days: 2}
+  - {sku: ACC-ANT, family: accessory, name: External Antenna A2, price_eur: 29.0, lead_days: 2}
+  - {sku: ACC-LIC, family: accessory, name: Remote Access Licence, price_eur: 99.0, lead_days: 1}
+  - {sku: ACC-UPS, family: accessory, name: Mini UPS 600, price_eur: 210.0, lead_days: 3}
+
+# Technical questions avoid commercial words (invoice, payment, price, delivery, ship, refund,
+# warranty, quote); commercial questions contain one. The mock checker relies on it.
+knowledge_base:
+  - id: kb-101
+    part: technical
+    topic: malfunction
+    title: Sensor shows offline
+    body: >-
+      Bus sensors (Temperature Sensor T100, Motion Sensor M110): check the bus cable and
+      power-cycle the controller. Zigbee sensors (Door Contact D50, Water Leak Sensor W20): replace
+      the battery, then re-pair the sensor in the app.
+    question: My sensor shows offline in the app, how do I get it back?
+    needs: [device]
+  - id: kb-102
+    part: technical
+    topic: how_to
+    title: Controller firmware update
+    body: Download the firmware from the portal, upload it on the service page, do not cut power.
+    question: How do I update the firmware on my controller?
+  - id: kb-103
+    part: technical
+    topic: how_to
+    title: Camera night mode
+    body: Enable IR in the camera settings and check that the lens is clean.
+    question: How do I switch on night mode on my camera?
+  - id: kb-104
+    part: technical
+    topic: how_to
+    title: Adding a second app user
+    body: In the app, open Site settings, Users, Invite; the invitee needs their own account.
+    question: How can I give a colleague access to the app?
+  - id: kb-105
+    part: technical
+    topic: malfunction
+    title: Camera image is black
+    body: >-
+      Dome Camera D2 and Bullet Camera B6: check the PoE light on the switch port and reseat the
+      network cable. Dome Camera D4 Night: switch night mode off and on; the IR filter may be
+      stuck.
+    question: Why is the image from my camera completely black?
+    needs: [device]
+  - id: kb-106
+    part: technical
+    topic: malfunction
+    title: Recorder storage full
+    body: >-
+      Network Recorder NVR8: lower the retention days under Storage. Network Recorder NVR16:
+      enable overwrite under Recording, Disk policy.
+    question: The recorder says storage is full, what should I change?
+    needs: [device]
+  - id: kb-107
+    part: technical
+    topic: how_to
+    title: Re-pairing a Zigbee device
+    body: Hold the device button for 10 seconds until it blinks, then choose Add device in the app.
+    question: How do I pair a new Zigbee device with the bridge?
+  - id: kb-108
+    part: technical
+    topic: malfunction
+    title: Temperature readings drift
+    body: >-
+      Temperature Sensor T100: move it away from heat sources and run calibration in the device
+      menu. Temperature and Humidity Sensor T200: replace the filter cap; set the offset in the app
+      under Device, Offsets.
+    question: My temperature sensor shows values that are too high, how do I fix it?
+    needs: [device]
+  - id: kb-109
+    part: technical
+    topic: how_to
+    title: Setting up alerts
+    body: Create a rule under Automations; choose the sensor, a threshold and who gets notified.
+    question: How do I get a notification when the CO2 level is high?
+  - id: kb-110
+    part: technical
+    topic: malfunction
+    title: Hub keeps restarting
+    body: Check that the power supply delivers 24V under load; replace it if it drops below 22V.
+    question: My hub restarts every few minutes, what can cause that?
+  - id: kb-111
+    part: technical
+    topic: how_to
+    title: Remote access setup
+    body: Activate the licence in the portal, then enable Remote access in the hub settings.
+    question: How do I reach my hub from outside the building?
+  - id: kb-112
+    part: technical
+    topic: malfunction
+    title: Door contact false alarms
+    body: Align the magnet within 10 mm of the contact and tighten the mounting screws.
+    question: Why does my door contact report open when the door is closed?
+  - id: kb-201
+    part: commercial
+    topic: refund
+    title: Refund policy
+    body: Unused equipment can be returned within 30 days of delivery; sales handles every refund.
+    question: Can I get a refund for equipment I did not use?
+  - id: kb-202
+    part: commercial
+    topic: delivery
+    title: Delivery times
+    body: Stock items ship within 2 business days; custom cabinets take 3 weeks.
+    question: When will my delivery arrive?
+    needs: [order]
+  - id: kb-203
+    part: commercial
+    topic: billing
+    title: Invoices and payment terms
+    body: Invoices are issued on shipment; payment is due within 30 days by bank transfer.
+    question: When is payment due for my invoice?
+    needs: [order]
+  - id: kb-204
+    part: commercial
+    topic: billing
+    title: Invoice copies
+    body: Every invoice is available in the portal under Account, Documents, as a PDF.
+    question: Where can I download a copy of my invoice?
+  - id: kb-205
+    part: commercial
+    topic: delivery
+    title: Changing the delivery address
+    body: The address can be changed in the portal until the order ships; after that call logistics.
+    question: Can I change the delivery address of my order?
+    needs: [order]
+  - id: kb-206
+    part: commercial
+    topic: other
+    title: Warranty coverage
+    body: Devices carry a 24-month warranty and batteries 12 months, counted from delivery.
+    question: How long is the warranty on your devices?
+  - id: kb-207
+    part: commercial
+    topic: billing
+    title: Volume prices
+    body: Orders above 50 devices get the project price list; ask sales for the current sheet.
+    question: Do you have lower prices for large orders?
+  - id: kb-208
+    part: commercial
+    topic: delivery
+    title: Shipping options
+    body: Standard shipping is free above 500 EUR; express next-day shipping costs 35 EUR.
+    question: Which shipping options do you offer?
+
+# --- Installation: where installers work, what the warehouse holds ------------------
+sites:
+  - name: Riverside Offices
+    access: Reception on the ground floor; plant room key at the front desk.
+    contact: {name: Marta Novak, phone: "+49 000 5550 1201"}
+  - name: Harbour Logistics Hall
+    access: Gate B; badge from the security booth, plant room behind loading bay 3.
+    contact: {name: Jonas Weber, phone: "+49 000 5550 2202"}
+  - name: Lindenhof School
+    access: Caretaker opens the boiler room between 7:00 and 15:00.
+    contact: {name: Petra Hahn, phone: "+49 000 5550 3303"}
+  - name: Northgate Clinic
+    access: Facilities desk on level -1; escort required in the technical area.
+    contact: {name: Ali Demir, phone: "+49 000 5550 4404"}
+
+# The installers' depots: what the installation process's warehouse (check_stock, reserve_parts)
+# holds. RFQ quotes do not read them; a quote's lead time is the catalog's lead_days.
+depots:
+  - name: Berlin depot
+    stock: {CTL-H200: 6, CTL-H400: 0, CTL-H800: 1, SEN-T100: 40, SEN-C300: 12, SEN-W20: 25, SEN-M110: 30}
+  - name: Hamburg depot
+    stock: {CTL-H200: 2, CTL-H400: 4, CTL-H800: 0, SEN-T100: 15, SEN-C300: 0, SEN-W20: 8, SEN-M110: 10}
+
+delivery_slots:
+  - {site: Riverside Offices, at: "2026-10-20T09:00"}
+  - {site: Riverside Offices, at: "2026-10-21T13:00"}
+  - {site: Harbour Logistics Hall, at: "2026-10-20T11:00"}
+  - {site: Lindenhof School, at: "2026-10-22T08:00"}
+  - {site: Northgate Clinic, at: "2026-10-21T10:00"}
+  - {at: "2026-10-23T09:00"}
+
+personas:
+  - {id: terse, style: "Short messages, a few words each, no greetings."}
+  - {id: chatty, style: "Friendly and talkative; adds small talk around the facts."}
+  - {id: non_native, style: "Simple English with small grammar mistakes; sometimes a German word."}
+  - {id: late_photos, style: "Reports a step first and sends the photo in a later message."}

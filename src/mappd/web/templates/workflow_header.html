@@ -1,0 +1,26 @@
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ w.process or "workflow" }}</p>
+    <h1>{{ w.name }} <span class="badge {{ badges.get(w.status, '') }}">{{ w.status }}</span>{% if w.stranded %} <span class="badge warn">stranded</span>{% endif %}</h1>
+    <p class="meta"><code class="id" title="{{ w.workflow_id }}">{{ w.workflow_id | readable_id }}</code></p>
+  </div>
+  <div class="meta">
+    {% for a in w.allowed %}<button hx-get="{{ link(w.workflow_id) }}/confirm/{{ a }}" hx-target="#confirm">{{ a }}</button>{% endfor %}
+  </div>
+</div>
+<div class="card">
+<dl class="facts">
+  <dt>version</dt><dd>{{ w.app_version or "-" }}</dd>
+  <dt>queue</dt><dd>{% if not w.queue or w.queue.startswith("_dbos") %}-{% else %}{{ w.queue }}{% endif %}</dd>
+  <dt>executor</dt><dd>{{ w.executor_id or "-" }}</dd>
+  <dt>created</dt><dd>{{ w.created_at | utc("%Y-%m-%d %H:%M:%S") or "-" }}</dd>
+  <dt>dequeued</dt><dd>{{ w.dequeued_at | utc("%Y-%m-%d %H:%M:%S") or "-" }}</dd>
+  <dt>completed</dt><dd>{{ w.completed_at | utc("%Y-%m-%d %H:%M:%S") or "-" }}{% if w.duration_ms is not none %} ({{ w.duration_ms }} ms){% endif %}</dd>
+  {% if w.recovery_attempts %}<dt>recovery attempts</dt><dd>{{ w.recovery_attempts }}</dd>{% endif %}
+  {% if w.parent_id %}<dt>parent</dt><dd><a href="{{ link(w.parent_id) }}"><code>{{ w.parent_id }}</code></a></dd>{% endif %}
+  {% if w.forked_from %}<dt>forked from</dt><dd><a href="{{ link(w.forked_from) }}"><code>{{ w.forked_from }}</code></a></dd>{% endif %}
+  {% if w.children %}<dt>children</dt><dd>{% for c in w.children %}<a href="{{ link(c) }}"><code>{{ c }}</code></a> {% endfor %}</dd>{% endif %}
+  {% if w.forks %}<dt>forks</dt><dd>{% for f in w.forks %}<a href="{{ link(f) }}"><code>{{ f }}</code></a> {% endfor %}</dd>{% endif %}
+  <dt>trace</dt><dd><a href="{{ link(w.workflow_id) }}/trace">Trace in MLflow</a></dd>
+</dl>
+</div>

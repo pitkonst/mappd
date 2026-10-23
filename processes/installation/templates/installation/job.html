@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}Job {{ job.external_id }}{% endblock %}
+{% block content %}
+<a class="back" href="/installation">← all jobs</a>
+{% if user %}
+<p class="dispatcher"><label>Dispatcher <input id="operator" name="operator" value="{{ user }}" readonly></label></p>
+{% else %}
+<p class="dispatcher"><label>Dispatcher <input id="operator" name="operator" value="" placeholder="your name" required></label></p>
+{% endif %}
+<div id="job" data-live="/api/v1/installation/events?job={{ job.external_id }}">
+  <div hx-get="/installation/jobs/{{ job.external_id }}/live" hx-trigger="live" hx-target="#live" hx-swap="outerHTML"></div>
+  {% include "installation/panel.html" %}
+</div>
+{% endblock %}

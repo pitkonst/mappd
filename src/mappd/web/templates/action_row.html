@@ -1,0 +1,28 @@
+<tr>
+  <td>
+    <strong>{{ a.kind }}</strong> <small>{{ summary }}</small>
+    <details><summary><small>key and payload</small></summary>
+      <p><code>{{ a.idempotency_key }}</code></p>
+      <pre>{{ a.payload | tojson(indent=2) }}</pre>
+      {% if a.last_error %}<p class="error">{{ a.last_error }}</p>{% endif %}
+      {% if a.claimed_by %}<p>workflow <a href="/workflows/{{ a.claimed_by | urlencode }}"><code>{{ a.claimed_by }}</code></a></p>{% endif %}
+    </details>
+  </td>
+  <td><span class="badge {{ {'done': 'ok', 'unknown': 'warn', 'failed': 'bad', 'pending': 'info', 'sending': 'info'}.get(a.status, '') }}">{{ a.status }}</span>{% if a.settled_by %}<br><small>settled by {{ a.settled_by }}</small>{% endif %}</td>
+  <td>{% if case %}<a href="{{ case }}">open case</a>{% endif %}</td>
+  <td class="num">{{ a.attempts }}</td>
+  <td class="nowrap">{{ a.updated_at | utc }}</td>
+  <td class="nowrap">
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    {% if retried %}<p class="flash ok">Settled; <a href="/workflows/{{ retried | urlencode }}">its workflow</a> is finishing the case.</p>{% endif %}
+    {% if a.status == "unknown" %}
+    {% for value, label, question in [("true", "took effect", "The receiver has it: finish the case without sending again?"), ("false", "not sent", "The receiver does not have it: send it again?")] %}
+    <form hx-post="/actions/resolve" hx-target="closest tr" hx-swap="outerHTML" hx-include="#operator" hx-confirm="{{ question }}" class="inline">
+      <input type="hidden" name="key" value="{{ a.idempotency_key }}">
+      <input type="hidden" name="took_effect" value="{{ value }}">
+      <button>{{ label }}</button>
+    </form>
+    {% endfor %}
+    {% endif %}
+  </td>
+</tr>

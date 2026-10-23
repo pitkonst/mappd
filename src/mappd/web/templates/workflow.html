@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}{{ w.name }}{% endblock %}
+{% block content %}
+<a class="back" href="/workflows">‹ workflows</a>
+<div id="confirm"></div>
+{% include "workflow_live.html" %}
+<div class="card">
+  <h2>Input</h2>
+  {% if w.payloads %}{% if w.input %}<details open><summary>{{ "truncated" if w.input.truncated else "input" }}</summary><pre>{{ w.input.text }}</pre></details>{% else %}<p class="muted">none</p>{% endif %}
+  {% else %}<p class="muted">hidden (MAPPD_WORKFLOWS_PAYLOADS=off)</p>{% endif %}
+  <h2>Output</h2>
+  {% if w.payloads %}{% if w.output %}<details open><summary>{{ "truncated" if w.output.truncated else "output" }}</summary><pre>{{ w.output.text }}</pre></details>{% else %}<p class="muted">none</p>{% endif %}
+  {% else %}<p class="muted">hidden (MAPPD_WORKFLOWS_PAYLOADS=off)</p>{% endif %}
+  {% if w.error %}<h2>Error</h2><pre class="error">{{ w.error }}</pre>{% endif %}
+</div>
+{% endblock %}

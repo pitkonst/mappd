@@ -1,0 +1,16 @@
+From: anna@example.com
+To: support@mappd.test
+Subject: Both parts
+Message-ID: <alt-1@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset="utf-8"
+
+Plain wins.
+--b1
+Content-Type: text/html; charset="utf-8"
+
+<p>HTML loses.</p>
+--b1--

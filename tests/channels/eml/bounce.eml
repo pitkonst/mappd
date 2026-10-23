@@ -1,0 +1,18 @@
+From: MAILER-DAEMON@example.com
+To: support@mappd.test
+Subject: Undelivered Mail Returned to Sender
+Message-ID: <bounce-1@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=delivery-status; boundary="b3"
+
+--b3
+Content-Type: text/plain; charset="utf-8"
+
+Delivery to the following recipient failed permanently.
+--b3
+Content-Type: message/delivery-status
+
+Final-Recipient: rfc822; nobody@example.com
+Action: failed
+Status: 5.1.1
+--b3--

@@ -1,0 +1,5 @@
+{# hx-disinherit: the buttons inside keep their own swap, not this block's outerHTML #}
+<div id="workflow-live"{% if live %} hx-get="{{ link(w.workflow_id) }}/live" hx-trigger="every 3s" hx-swap="outerHTML" hx-disinherit="*"{% endif %}>
+{% include "workflow_header.html" %}
+{% include "workflow_steps.html" %}
+</div>

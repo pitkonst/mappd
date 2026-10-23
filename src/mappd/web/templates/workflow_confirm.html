@@ -1,0 +1,22 @@
+<div class="card">
+  <h2>{{ action | capitalize }} <code>{{ w.workflow_id }}</code>?</h2>
+  <p>{{ effect }}</p>
+  {% if action == "fork" %}
+  <ul class="plain">
+    {% for s, what in effects %}<li>#{{ s.function_id }} {{ s.name }} ({{ s.kind }}): {{ what }}</li>{% else %}<li>no recorded step runs again; the workflow continues after its last step</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if action == "recover" %}
+  <form hx-post="/workflows/recover" hx-target="#confirm">
+    <input type="hidden" name="workflow_id" value="{{ w.workflow_id }}">
+  {% else %}
+  <form hx-post="{{ link(w.workflow_id) }}/{{ action }}" hx-target="#confirm">
+  {% endif %}
+    {% if action == "fork" %}<input type="hidden" name="start_step" value="{{ step }}">{% endif %}
+    {% if action in ("fork", "retry", "recover") %}
+    <div class="field"><label for="to_version">run on version</label>
+      <select id="to_version" name="to_version">{% for v in versions %}<option value="{{ v }}"{% if loop.first %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <button class="primary">Yes, {{ action }}</button>
+  </form>
+</div>

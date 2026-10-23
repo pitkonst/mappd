@@ -1,0 +1,104 @@
+# The MAPP-D stack: infrastructure only — Postgres, MLflow, the model gateway, a dev mail server.
+# The application (app, migrations, mocks) is a separate file:
+#
+#   docker compose up -d --wait                                    dev stack; then `uv run mappd ...`
+#   docker compose -f compose.yaml -f compose.app.yaml up -d --build --wait
+#                                                                   the full stack, app included
+#   MAPPD_GATEWAY_CONFIG=gateway.mocks.yaml docker compose --profile mocks \
+#       -f compose.yaml -f compose.app.yaml up -d --build            deterministic models, no keys
+#
+# Every parameter comes from .env (see .env.example); each has a working default.
+# Host ports can be moved (MAPPD_*_PORT) so a second stack can run beside this one.
+
+services:
+  postgres:
+    image: ${MAPPD_PG_IMAGE:-pgvector/pgvector:0.8.1-pg17}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${MAPPD_PG_USER:-mappd}
+      POSTGRES_PASSWORD: ${MAPPD_PG_PASSWORD:-mappd}
+      POSTGRES_DB: mappd
+    ports:
+      - "127.0.0.1:${MAPPD_PG_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MAPPD_PG_USER:-mappd} -d mappd"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mlflow:
+    build: deploy/mlflow
+    image: ${MAPPD_MLFLOW_IMAGE:-mappd-mlflow:3.17.0}
+    restart: unless-stopped
+    environment:
+      # Models go through agentgateway; MLflow's own AI Gateway (and its UI) stays off.
+      MLFLOW_ENABLE_AI_GATEWAY: "false"
+      MLFLOW_DISABLE_TELEMETRY: "true"
+    command:
+      - mlflow
+      - server
+      - --host=0.0.0.0
+      - --port=5000
+      - --backend-store-uri=postgresql+psycopg://${MAPPD_PG_USER:-mappd}:${MAPPD_PG_PASSWORD:-mappd}@postgres:5432/mlflow
+      - --artifacts-destination=/mlartifacts
+      - --allowed-hosts=mlflow,mlflow:5000,localhost,localhost:*,127.0.0.1,127.0.0.1:*
+    ports:
+      - "127.0.0.1:${MAPPD_MLFLOW_PORT:-5001}:5000"
+    volumes:
+      - mlartifacts:/mlartifacts
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+
+  agentgateway:
+    image: ${MAPPD_GATEWAY_IMAGE:-ghcr.io/agentgateway/agentgateway:v1.6.0}
+    restart: unless-stopped
+    command: ["-f", "/config/gateway.yaml"]
+    environment:
+      IPV6_ENABLED: "false"
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # Where the mock models listen; in dev they run on the host (mappd mock llm).
+      MAPPD_MOCK_LLM_URL: ${MAPPD_MOCK_LLM_URL:-http://mock-llm:9000/v1}
+      # The installation systems' MCP servers (no real systems in the demo: the mock).
+      MAPPD_MOCK_MCP_URL: ${MAPPD_MOCK_MCP_URL:-http://mock-mcp:9400}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./deploy/agentgateway/${MAPPD_GATEWAY_CONFIG:-gateway.yaml}:/config/gateway.yaml:ro
+    ports:
+      - "127.0.0.1:${MAPPD_GATEWAY_PORT:-4000}:4000"
+      - "127.0.0.1:${MAPPD_GATEWAY_MCP_PORT:-3000}:3000"
+    depends_on:
+      mlflow: {condition: service_healthy}
+
+  # A real SMTP and IMAP server for development and the acceptance tests (GreenMail, Apache-2.0):
+  # mailboxes support@, rfq@ and customer@mappd.test, password "mappd". Not for production —
+  # a deploy points MAPPD_<PROCESS>_IMAP_*/SMTP_* at its own mail servers.
+  greenmail:
+    image: ${MAPPD_GREENMAIL_IMAGE:-greenmail/standalone:2.1.14}
+    restart: unless-stopped
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users.login=email
+        -Dgreenmail.users=support:mappd@mappd.test,rfq:mappd@mappd.test,customer:mappd@mappd.test,buyer:mappd@mappd.test
+    ports:
+      - "127.0.0.1:${MAPPD_GREENMAIL_SMTP_PORT:-3025}:3025"
+      - "127.0.0.1:${MAPPD_GREENMAIL_IMAP_PORT:-3143}:3143"
+      - "127.0.0.1:${MAPPD_GREENMAIL_API_PORT:-8080}:8080"
+    healthcheck:
+      # The image has bash but no curl or wget.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/3143"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:
+  mlartifacts:

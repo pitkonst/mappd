@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block title %}RFQ dashboard{% endblock %}
+{% macro rate(value) %}{% if value is none %}—{% else %}{{ "%.0f"|format(value * 100) }}%{% endif %}{% endmacro %}
+{% macro cases(n, status, category, decision=None) %}<a href="/rfq?status={{ status }}{% if category != "all" %}&amp;category={{ category }}{% endif %}{% if decision %}&amp;decision={{ decision }}{% endif %}">{{ n }}</a>{% endmacro %}
+{% block content %}
+<h1>RFQ: can we trust the automation more than yesterday?</h1>
+<p>Last {{ report.days }} days. Approved without edits: <strong>{{ rate(report.total.without_edits_rate) }}</strong>
+({{ cases(report.total.without_edits, "all", "all", "unedited") }} of {{ report.total.proposals }}); false escalations: <strong>{{ rate(report.total.false_escalation_rate) }}</strong>
+({{ cases(report.total.false_escalations, "resolved", "all", "false_escalation") }} of {{ cases(report.total.resolutions, "resolved", "all") }}).
+Traces and token cost: <a href="{{ mlflow }}">MLflow</a>.</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>category</th><th>level</th><th>decided</th><th>auto</th><th>approved without edits</th><th>resolved escalations</th><th>false escalations</th><th>verdict</th></tr></thead>
+  <tbody>
+  {% for c in report.categories %}
+  <tr>
+    <td>{{ c.category }}</td>
+    <td>{{ c.level }}</td>
+    <td>{{ c.proposals }}</td>
+    <td>{{ cases(c.auto, "all", c.category, "auto") }}</td>
+    <td>{{ rate(c.without_edits_rate) }} ({{ cases(c.without_edits, "all", c.category, "unedited") }})</td>
+    <td>{{ cases(c.resolutions, "resolved", c.category) }}</td>
+    <td>{{ rate(c.false_escalation_rate) }} ({{ cases(c.false_escalations, "resolved", c.category, "false_escalation") }})</td>
+    <td>{{ c.verdict }}{% if c.command %}<br><code>{{ c.command }}</code>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8">No decisions in this window yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

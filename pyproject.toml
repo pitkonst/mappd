@@ -1,0 +1,164 @@
+[project]
+name = "mappd"
+dynamic = ["version"]
+description = "MAPP-D: an open stack for reliable business-process automation with LLMs"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.14"
+authors = [{ name = "Petr Konstantinov", email = "pit.here@gmail.com" }]
+keywords = ["llm", "agents", "workflow", "durable-execution", "automation"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Private :: Do Not Upload",  # a boilerplate: clone it, don't install it from PyPI
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+dependencies = [
+    "alembic>=1.20.0",
+    "dbos>=3.2.0",
+    "fastapi>=0.143.0",
+    "httpx2>=2.13.1",
+    "jinja2>=3.1.6",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.1",
+    "opentelemetry-sdk>=1.45.1",
+    "pgvector>=0.5.1",
+    "psycopg[binary]>=3.3.6",
+    "pydantic-ai-slim[dbos,mcp,openai]>=2.55.0",
+    "pyjwt>=2.10",
+    "python-multipart>=0.0.32",
+    "pyyaml>=6.0.3",
+    "rich>=15",
+    "sqlalchemy>=2.1.4",
+    "typer>=0.12",
+    "uvicorn>=0.54.0",
+]
+
+[project.urls]
+Repository = "https://github.com/pitkonst/mappd"
+Issues = "https://github.com/pitkonst/mappd/issues"
+
+[project.scripts]
+mappd = "mappd.cli:app"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=1.15",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-timeout>=2.4.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.11",
+    "types-pyyaml>=6.0.12",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/mappd/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mappd"]
+
+# --- ruff: lint + format -----------------------------------------------------
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src", "tests", "processes"]
+# Spike scripts are one-off experiments, not production code.
+extend-exclude = ["spike"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "N",        # pep8-naming
+    "UP",       # pyupgrade
+    "B",        # bugbear
+    "A",        # builtins shadowing
+    "C4",       # comprehensions
+    "SIM",      # simplify
+    "RET",      # return
+    "PTH",      # use pathlib
+    "PT",       # pytest style
+    "S",        # bandit (security)
+    "ANN",      # type annotations
+    "TC",       # type-checking imports
+    "RUF",      # ruff-specific
+    "PL",       # pylint
+    "D",        # pydocstyle
+]
+ignore = [
+    "D100", "D104", "D105", "D107",  # module/package/magic/__init__ docstrings
+    "PLR0913",                       # too many arguments
+    "ANN401",                        # JSON documents are Any by nature
+]
+
+[tool.ruff.lint.flake8-type-checking]
+# Pydantic resolves field annotations at runtime: their imports must stay real imports.
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+
+[tool.ruff.lint.isort]
+# Explicit, so a fresh clone without src/ on the path sorts imports the same way.
+known-first-party = ["mappd", "processes"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "S311", "D", "ANN", "PLR2004"]
+# Typer reads command annotations at runtime: imports used in them must stay real imports.
+# Typer passes command parameters by keyword, so long command signatures are fine.
+"src/mappd/cli/**" = ["TC001", "TC002", "TC003", "PLR0917"]
+# One example must stay on one line for `--help` to show it verbatim.
+"src/mappd/cli/data.py" = ["E501"]
+# FastAPI, Pydantic and DBOS read process annotations at runtime too.
+"processes/**" = ["TC001", "TC002", "TC003"]
+# Seeded pseudo-random generators make datasets reproducible; nothing here is security-related.
+"src/mappd/data/**" = ["S311"]
+"processes/**/synth.py" = ["S311"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# --- mypy --------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_unreachable = true
+files = ["src", "tests", "processes", "conftest.py"]
+
+# --- pytest ------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests", "processes"]
+pythonpath = [".", "tests/support"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib", "-m", "not acceptance"]
+markers = [
+    "pg: needs Postgres (docker compose up -d --wait postgres)",
+    "acceptance: drives the docker compose stack (uv run pytest -m acceptance)",
+]
+timeout = 60
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["mappd"]
+omit = ["*/__main__.py"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]

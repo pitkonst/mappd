@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environments
+.venv/
+.env
+
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Holdout sets never enter the repository (AGENTS.md, rule 8)
+holdout*.jsonl
+# Feedback cases are real customers' text (mappd feedback sync): never tracked.
+feedback*.jsonl
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local agent workspaces
+.superpowers/
+.claude/
+
+# Synthetic-data response cache
+.mappd/
+
+# Generated datasets: synth.jsonl is the holdout's source; imports may hold real history
+processes/*/evals/synth.jsonl
+processes/*/evals/imported.jsonl
+
+docs/internal/
+.playwright-mcp/

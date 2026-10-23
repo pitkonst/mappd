@@ -1,0 +1,56 @@
+"""Orchestration of the $name process: a thin DBOS layer over the domain functions.
+
+One short workflow per case (AGENTS.md, rule 3): save the case, decide, save the outcome. A case
+waiting for a person is a row in ${name}_cases, not a sleeping workflow. Durable steps get their
+"$name.<function>" names from the module itself; DBOS registers and replays by name.
+"""
+
+import sqlalchemy as sa
+from psycopg.types.json import Jsonb
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from mappd import db, durable
+
+from . import domain
+from .db import CASES
+from .schemas import ${Name}Input, ${Name}Result
+
+
+@durable.workflow
+async def run(case: ${Name}Input) -> ${Name}Result:
+    """Process one case; start it with the ID mappd.ids.from_key("$name", case.external_id)."""
+    # Durable steps are sync functions; awaiting them runs them on a worker thread.
+    await save_case(case)
+    result = domain.decide(case)
+    await save_outcome(case.external_id, result)
+    return result
+
+
+@durable.transaction
+def save_case(conn: db.Connection, case: ${Name}Input) -> None:
+    """Record the case; a redelivered case changes nothing."""
+    db.run(
+        conn,
+        pg_insert(CASES)
+        .values(
+            external_id=case.external_id,
+            payload=Jsonb(case.model_dump(mode="json")),
+        )
+        .on_conflict_do_nothing(index_elements=["external_id"]),
+    )
+
+
+@durable.transaction
+def save_outcome(conn: db.Connection, external_id: str, result: ${Name}Result) -> None:
+    """Store the decision and move the case to its next status; a replay matches no row."""
+    db.run(
+        conn,
+        sa.update(CASES)
+        .where(CASES.c.external_id == external_id, CASES.c.status == "new")
+        .values(
+            status=result.outcome,
+            output=Jsonb(result.model_dump(mode="json")),
+            version=CASES.c.version + 1,
+            updated_at=sa.func.now(),
+        ),
+    )

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MAPP-D{% endblock %}</title>
+  <link rel="stylesheet" href="/static/mappd.css">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <script src="/static/htmx.min.js"></script>
+  <script src="/static/live.js"></script>
+</head>
+<body>
+  <header>
+    <a href="/"><strong>MAPP-D</strong></a>
+    {% for name in request.app.state.processes | default([]) %}<a href="/{{ name }}">{{ name }}</a>{% endfor %}
+    <a href="/actions">actions</a>
+    <a href="/workflows">workflows</a>
+    <a href="/ops">ops</a>
+    {% if request.app.state.auth_mode | default("none") != "none" %}
+      {% set me = request.state.principal | default(none) %}
+      {% if me %}
+        <span>signed in as {{ me.name }}</span>
+        <form method="post" action="/logout" style="display:inline"><button>sign out</button></form>
+      {% else %}
+        <a href="/login">sign in</a>
+      {% endif %}
+    {% endif %}
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

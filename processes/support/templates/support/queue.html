@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Support queue{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Process</p>
+    <h1>Support</h1>
+  </div>
+  <a href="/support/dashboard">Trust dashboard →</a>
+</div>
+<nav class="tabs">
+  {% for tab, label in [("awaiting_approval", "awaiting approval"), ("escalated", "escalated"), ("resolved", "resolved"), ("all", "all")] %}
+  <a href="/support?status={{ tab }}{% if extra %}&amp;{{ extra }}{% endif %}" {% if status == tab %}aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+<div class="table-wrap" data-live="/api/v1/support/events">
+  <table>
+    <thead><tr><th>status</th><th>subject</th><th class="wide">sender</th><th class="wide">topic</th><th class="wide">team</th><th class="wide">received</th></tr></thead>
+    <tbody hx-get="/support/rows?{{ query }}" hx-trigger="live" hx-swap="innerHTML">
+      {% include "support/rows.html" %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

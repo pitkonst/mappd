@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+{% from "rfq/macros.html" import status, outcome %}
+{% block title %}{{ t.subject }}{% endblock %}
+{% block content %}
+<a class="back" href="/rfq">← queue</a>
+<div class="page-head">
+  <div>
+    <h1>{{ t.subject }}</h1>
+    <div class="meta">{{ status(t.status) }}<span>{{ t.sender }}</span><code>{{ t.external_id }}</code><span>version {{ t.version }}</span></div>
+  </div>
+</div>
+{% if t.processing %}
+<p class="flash bad">Processing stopped: its workflow {{ "was cancelled" if t.processing.status == "CANCELLED" else "failed" }}, so this case never reached a decision. <a href="/workflows/{{ t.processing.workflow_id | urlencode }}">Open the workflow and {{ t.processing.remedy }} it</a>; the case then moves on.</p>
+{% endif %}
+<div class="split">
+<div>
+  <section class="card">
+    <h2>Request</h2>
+    <pre class="message">{{ t.body }}</pre>
+  </section>
+  {% if t.mail and (t.mail.follows or t.mail.attachments) %}
+  <section class="card">
+    <h2>Email</h2>
+    {% if t.mail.follows %}<p>follows <a href="/rfq/requests/{{ t.mail.follows | urlencode }}"><code>{{ t.mail.follows }}</code></a></p>{% endif %}
+    {% if t.mail.attachments %}<ul class="plain">{% for a in t.mail.attachments %}<li>{{ a.filename or "(unnamed)" }} <span class="muted">{{ a.content_type }}, {{ a.size }} bytes</span></li>{% endfor %}</ul>{% endif %}
+  </section>
+  {% endif %}
+  {% if t.output %}
+  <section class="card">
+    <h2>Quote {{ outcome(t.output.outcome) }}{% if t.output.escalate_to %} → {{ t.output.escalate_to }}{% endif %}</h2>
+    {% if why %}<p class="flash bad">Escalated: {{ why }}.</p>{% endif %}
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th class="wide">requested</th><th class="num">qty</th><th>product</th><th class="num wide">unit</th><th class="num">line</th><th class="num">lead</th><th></th></tr></thead>
+      <tbody>
+      {% for l in t.output.lines %}
+      <tr>
+        <td class="wide">{{ l.requested }}</td>
+        <td class="num">{{ l.quantity if l.quantity is not none else "?" }}</td>
+        <td>{% if l.sku %}{{ l.name }} <code>{{ l.sku }}</code>{% else %}<span class="badge warn">no match</span>{% endif %}</td>
+        <td class="num wide">{{ l.unit_price if l.unit_price is not none else "" }}</td>
+        <td class="num">{{ l.line_total if l.line_total is not none else "" }}</td>
+        <td class="num">{% if l.lead_days is not none %}{% if l.late %}<span class="badge bad" title="beyond the {{ t.output.needed_by_days }} days asked">{{ l.lead_days }} days</span>{% else %}{{ l.lead_days }} days{% endif %}{% endif %}</td>
+        <td>{% if l.alternative %}faster: <code>{{ l.alternative }}</code>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p>Total <strong>{{ t.output.total }} {{ t.output.currency }}</strong> <span class="muted">excl. VAT</span>{% if t.output.needed_by_days %} · needed in {{ t.output.needed_by_days }} days{% endif %}</p>
+  </section>
+  {% endif %}
+{% if t.decision %}
+  <section class="card">
+    <h2>Decisions <small>oldest first</small></h2>
+    <ol class="plain decisions">
+    {% set ns = namespace(d=t.decision, chain=[]) %}
+    {% for _ in range(10) %}{% if ns.d %}{% set ns.chain = [ns.d] + ns.chain %}{% set ns.d = ns.d.prior %}{% endif %}{% endfor %}
+    {% for d in ns.chain %}{% set ns.d = d %}
+      <li><strong>{{ ns.d.kind }}</strong> by {{ ns.d.operator }} <small>{{ ns.d.decided_at | utc }}</small>{% if ns.d.shadow %} · shadow: not sent{% endif %}{% if ns.d.edited_reply %} · reply edited{% endif %}{% for k, v in ns.d.corrected.model_dump(exclude_none=True).items() %} · {{ k | replace("_", " ") }} → {{ v if v is string else v | tojson }}{% endfor %}{% if ns.d.agent_could_handle %} · the agent could have handled it{% endif %}{% if ns.d.note %}<br><small>{{ ns.d.note }}</small>{% endif %}</li>
+    {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+  {% if t.status in ("sent", "shadowed", "approved") %}
+  <section class="card">
+    <p class="flash {% if t.status == "approved" %}bad{% else %}ok{% endif %}">{% if t.status == "approved" %}Approved by {{ t.approved_by }}, but the quote is not confirmed sent. Settle it under <a href="/actions?status=unknown">unknown actions</a> (or, if it failed, <a href="/actions?status=failed">failed actions</a>): say whether it reached the customer, and settling finishes this request.{% elif t.status == "shadowed" %}Decided by {{ t.approved_by }} — shadow mode: not sent.{% else %}Sent by {{ t.approved_by }}:{% endif %}</p>
+    <pre class="message">{{ t.reply }}</pre>
+  </section>
+  {% endif %}
+</div>
+<div>
+  <div id="result"></div>
+  {% if "approve" in forms %}
+  <section class="card">
+    <h2>Approve</h2>
+    <form hx-post="/rfq/requests/{{ t.external_id | urlencode }}/approve" hx-target="#result" hx-headers='{"Idempotency-Key": "{{ keys.approve }}"}'>
+      <div id="fields-approve">{{ forms.approve }}</div>
+      <button class="primary">Approve and send</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Or escalate</h2>
+    <form hx-post="/rfq/requests/{{ t.external_id | urlencode }}/escalate" hx-target="#result" hx-headers='{"Idempotency-Key": "{{ keys.escalate }}"}'>
+      <div id="fields-escalate">{{ forms.escalate }}</div>
+      <button>Escalate</button>
+    </form>
+  </section>
+  {% elif "resolve" in forms %}
+  <section class="card">
+    <h2>Resolve</h2>
+    {% if rule %}<p class="muted">Escalated by a hard rule: {{ rule }}. Escalating was right; record how it ended.</p>{% endif %}
+    <form hx-post="/rfq/requests/{{ t.external_id | urlencode }}/resolve" hx-target="#result" hx-headers='{"Idempotency-Key": "{{ keys.resolve }}"}'>
+      <div id="fields-resolve">{{ forms.resolve }}</div>
+      <button class="primary">Resolve</button>
+    </form>
+  </section>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

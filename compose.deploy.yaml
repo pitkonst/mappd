@@ -1,0 +1,61 @@
+# The deploy overlay: the same stack on a server, pulled from the registry instead of
+# built, with GreenMail behind the `dev` profile and mail servers from the .env.
+# Only deploys use it (deploy/deploy.sh), after compose.yaml and compose.app.yaml:
+#
+#   docker compose \
+#       -f compose.yaml -f compose.app.yaml -f compose.deploy.yaml \
+#       --env-file .env --env-file release.env up -d
+#
+# release.env is written by deploy.sh and carries MAPPD_APP_IMAGE and MAPPD_MLFLOW_IMAGE —
+# both are required, a release always names its images (the same SHA tags both). Needs
+# Docker Compose >= 2.24 for `!reset`.
+
+# The environment's mail servers; compose.app.yaml hard-codes the dev GreenMail.
+x-mail: &mail
+  MAPPD_SUPPORT_IMAP_HOST: ${MAPPD_SUPPORT_IMAP_HOST:-}
+  MAPPD_SUPPORT_IMAP_PORT: ${MAPPD_SUPPORT_IMAP_PORT:-}
+  MAPPD_SUPPORT_IMAP_TLS: ${MAPPD_SUPPORT_IMAP_TLS:-}
+  MAPPD_SUPPORT_SMTP_HOST: ${MAPPD_SUPPORT_SMTP_HOST:-}
+  MAPPD_SUPPORT_SMTP_PORT: ${MAPPD_SUPPORT_SMTP_PORT:-}
+  MAPPD_SUPPORT_SMTP_TLS: ${MAPPD_SUPPORT_SMTP_TLS:-}
+  MAPPD_RFQ_IMAP_HOST: ${MAPPD_RFQ_IMAP_HOST:-}
+  MAPPD_RFQ_IMAP_PORT: ${MAPPD_RFQ_IMAP_PORT:-}
+  MAPPD_RFQ_IMAP_TLS: ${MAPPD_RFQ_IMAP_TLS:-}
+  MAPPD_RFQ_SMTP_HOST: ${MAPPD_RFQ_SMTP_HOST:-}
+  MAPPD_RFQ_SMTP_PORT: ${MAPPD_RFQ_SMTP_PORT:-}
+  MAPPD_RFQ_SMTP_TLS: ${MAPPD_RFQ_SMTP_TLS:-}
+
+x-app-image: &app-image
+  build: !reset null
+  image: ${MAPPD_APP_IMAGE:?the release pins the app image (MAPPD_APP_IMAGE=<registry>/mappd-app:<sha>)}
+
+services:
+  mlflow:
+    build: !reset null
+    image: ${MAPPD_MLFLOW_IMAGE:?the release pins the MLflow image (MAPPD_MLFLOW_IMAGE=<registry>/mappd-mlflow:<tag>)}
+
+  migrate:
+    <<: *app-image
+    environment:
+      <<: *mail
+
+  app:
+    <<: *app-image
+    environment:
+      <<: *mail
+
+  mock-llm:
+    <<: *app-image
+  mock-webhook:
+    <<: *app-image
+  mock-telegram:
+    <<: *app-image
+  mock-mcp:
+    <<: *app-image
+  slow-smtp:
+    <<: *app-image
+
+  # GreenMail is for development and the acceptance stack; a server only runs it when
+  # COMPOSE_PROFILES includes `dev`.
+  greenmail:
+    profiles: [dev]

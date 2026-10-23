@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}Installation jobs{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Process</p>
+    <h1>Installation</h1>
+  </div>
+</div>
+<nav class="tabs">
+  {% for t, label in tabs %}<a href="/installation?tab={{ t }}" {% if t == tab %}aria-current="page"{% endif %}>{{ label }} <small>{{ counts[t] }}</small></a>{% endfor %}
+</nav>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>job</th><th class="wide">site</th><th class="wide">installer</th><th class="wide">appointment</th><th>state</th><th>waiting on</th></tr></thead>
+  <tbody>
+  {% for j in jobs %}
+  <tr>
+    <td><a href="/installation/jobs/{{ j.external_id }}"><code>{{ j.external_id }}</code></a></td>
+    <td class="wide">{{ j.site }}</td>
+    <td class="wide">{{ j.installer_name }}{% if j.deep_link %}<br><small>not linked: <a href="{{ j.deep_link }}">link</a></small>{% endif %}</td>
+    <td class="nowrap wide">{{ j.appointment_at | utc }}</td>
+    <td><span class="badge {{ {'blocked': 'bad', 'handed_over': 'ok'}.get(j.state, 'info') }}">{{ j.state | replace("_", " ") }}</span>{% if j.blocked_reason %}<br><small>{{ j.blocked_reason | replace("_", " ") }}, from {{ j.blocked_from | replace("_", " ") }}</small>{% endif %}</td>
+    <td class="waiting">
+      {% set pending = j.proposals | selectattr("status", "equalto", "pending") | list %}
+      {% if pending %}<span class="badge warn">{{ pending | length }} proposal{{ "s" if pending | length > 1 }} to decide</span> {% endif %}
+      {% if j.taken_over_by %}<span class="badge info">held by {{ j.taken_over_by }}</span> {% endif %}
+      {% for o in j.overdue %}<span class="badge bad">{{ o | replace("_", " ") }} overdue</span> {% endfor %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td class="empty" colspan="6">Nothing here.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

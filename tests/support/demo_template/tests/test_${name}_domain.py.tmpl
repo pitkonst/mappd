@@ -1,0 +1,12 @@
+from processes.$name.domain import decide
+from processes.$name.schemas import ${Name}Input
+
+
+def test_a_hard_rule_escalates() -> None:
+    result = decide(${Name}Input(external_id="t-1", text="I want a refund"))
+    assert result.outcome == "escalated"
+
+
+def test_other_cases_are_proposed() -> None:
+    result = decide(${Name}Input(external_id="t-2", text="The sensor is offline"))
+    assert result.outcome == "proposed"

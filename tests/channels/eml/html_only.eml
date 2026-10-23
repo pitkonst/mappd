@@ -1,0 +1,10 @@
+From: Ben Beispiel <ben@example.com>
+To: support@mappd.test
+Subject: Hub question
+Date: Fri, 16 Oct 2026 10:00:00 +0200
+Message-ID: <html-1@example.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><head><style>p { color: red; }</style><script>alert("x")</script></head>
+<body><p>Hello team,</p><p>How do I pair the hub &amp; the sensor?<br>Thanks</p></body></html>
