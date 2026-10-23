@@ -13,11 +13,11 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from mappd.settings import Settings
 from mappd.web import FormError, form, parse_form
 from mappd.web.auth import principal as signed_in
 from mappd.web.http import htmx_decided
 from mappd.web.templates import templates_for
+from mappd.web.workflows_api import settings_of
 
 from . import domain, service, trust
 from .schemas import Decision, Escalation, Resolution
@@ -71,7 +71,7 @@ async def queue(
 async def dashboard(request: Request, days: int = 30) -> HTMLResponse:
     """Can a category be trusted more than yesterday? The numbers and the verdict."""
     report = await trust.report(max(1, min(days, 365)))
-    context = {"report": report, "mlflow": Settings.from_env().mlflow_url}
+    context = {"report": report, "mlflow": settings_of(request).mlflow_url}
     return templates.TemplateResponse(request, "rfq/dashboard.html", context)
 
 

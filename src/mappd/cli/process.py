@@ -174,9 +174,10 @@ def _policy_target(name: str) -> tuple[Process, Path]:
     proc = load(settings).get(name)
     if proc is None:
         fail(f"no process {name!r} in {settings.processes_dir}", EXIT_USAGE)
-    if proc.autonomy is None:
+    path = proc.autonomy_path()
+    if path is None:
         fail(f"process {name!r} declares no autonomy file", EXIT_USAGE)
-    return proc, proc.autonomy
+    return proc, path
 
 
 def _report(path: Path, diff: str, as_json: bool) -> None:

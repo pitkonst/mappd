@@ -6,6 +6,7 @@ import inspect
 import re
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, get_type_hints
 
 from fastapi import APIRouter, FastAPI
@@ -14,11 +15,11 @@ from pydantic_ai import Agent
 
 from mappd.autonomy import Policy
 from mappd.autonomy import load as load_policy
+from mappd.settings import environment
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
     from datetime import datetime
-    from pathlib import Path
 
     from mappd.channels.email import Email
     from mappd.data.hook import SynthSpec
@@ -60,6 +61,7 @@ class Schedule:
     workflow: Callable[[datetime, Any], Coroutine[Any, Any, None]]
     cron: str
     context: Any = None  # passed to the workflow on every tick
+    when: Callable[[], bool] | None = None  # evaluated when the app starts; None means always on
 
 
 @dataclass(frozen=True)
@@ -120,17 +122,25 @@ class Process:
         if self.pages is not None and not isinstance(self.pages, APIRouter):
             raise TypeError(f"process {self.name!r}: pages must be a fastapi.APIRouter")
 
+    def autonomy_path(self) -> Path | None:
+        """The process's autonomy policy path (`MAPPD_<NAME>_AUTONOMY` overrides `autonomy`)."""
+        if self.autonomy is None:
+            return None
+        override = environment().get(f"MAPPD_{self.name.upper()}_AUTONOMY", "").strip()
+        return Path(override) if override else self.autonomy
+
     def policy(self) -> Policy:
         """The process's autonomy policy, read once per file (a change ships with a deploy).
 
         Raises:
             PolicyError: the file is malformed.
         """
-        if self.autonomy is None:
+        path = self.autonomy_path()
+        if path is None:
             return Policy()
-        if self.autonomy not in _POLICIES:
-            _POLICIES[self.autonomy] = load_policy(self.autonomy)
-        return _POLICIES[self.autonomy]
+        if path not in _POLICIES:
+            _POLICIES[path] = load_policy(path)
+        return _POLICIES[path]
 
     def ingest_input_model(self) -> type[BaseModel] | None:
         """Pydantic `BaseModel` type of the first parameter of `ingest`, if any."""

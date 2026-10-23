@@ -1,11 +1,11 @@
 """RFQ processing: requests for quotation become priced quotes."""
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
 from mappd.ops import Cases
 from mappd.process import MockSpec, Process
+from mappd.settings import environment
 
 from . import feedback
 from .api import router
@@ -19,7 +19,7 @@ from .pages import router as page_router
 from .service import ingest
 
 # Tests and the acceptance stack point MAPPD_RFQ_AUTONOMY at their own policy file.
-AUTONOMY = Path(os.environ.get("MAPPD_RFQ_AUTONOMY") or Path(__file__).parent / "autonomy.yaml")
+AUTONOMY = Path(environment().get("MAPPD_RFQ_AUTONOMY") or Path(__file__).parent / "autonomy.yaml")
 
 process = Process(
     name="rfq",

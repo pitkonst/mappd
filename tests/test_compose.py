@@ -84,16 +84,19 @@ def test_webhooks_are_off_unless_configured() -> None:
     # The help desk stand-in is a mock; a real deploy names its own receiver in .env.
     assert APP_SERVICES["mock-webhook"]["profiles"] == ["mocks"]
     env = APP_SERVICES["app"]["environment"]
-    assert env["MAPPD_SUPPORT_WEBHOOK_URL"] == "${MAPPD_SUPPORT_WEBHOOK_URL:-}"
-    secret = "${MAPPD_SUPPORT_WEBHOOK_SECRET:-}"  # noqa: S105 - a compose substitution
-    assert env["MAPPD_SUPPORT_WEBHOOK_SECRET"] == secret
-    assert "MAPPD_SUPPORT_WEBHOOK_URL=\n" in ENV_EXAMPLE
+    for proc in ("SUPPORT", "RFQ"):
+        assert env[f"MAPPD_{proc}_WEBHOOK_URL"] == f"${{MAPPD_{proc}_WEBHOOK_URL:-}}"
+        secret = f"${{MAPPD_{proc}_WEBHOOK_SECRET:-}}"
+        assert env[f"MAPPD_{proc}_WEBHOOK_SECRET"] == secret
+        assert f"MAPPD_{proc}_WEBHOOK_URL=\n" in ENV_EXAMPLE
     assert "MAPPD_SUPPORT_TELEGRAM_SECRET" not in env, "support takes no Telegram tickets"
 
 
 def test_the_autonomy_policy_defaults_to_the_reviewed_file() -> None:
     env = APP_SERVICES["app"]["environment"]
     assert env["MAPPD_SUPPORT_AUTONOMY"] == "${MAPPD_SUPPORT_AUTONOMY:-}"
+    assert env["MAPPD_RFQ_AUTONOMY"] == "${MAPPD_RFQ_AUTONOMY:-}"
+    assert env["MAPPD_WORKFLOWS_PAYLOADS"] == "${MAPPD_WORKFLOWS_PAYLOADS:-}"
 
 
 def test_the_app_version_is_not_a_constant() -> None:

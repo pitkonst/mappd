@@ -109,14 +109,18 @@ def test_explicit_database_urls_win_over_pg_vars() -> None:
 def test_dotenv_file_loads_values(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text(
-        "# comment\n\nMAPPD_APP_NAME=acme\nexport MAPPD_PG_PORT=15433\nMAPPD_QUOTED='q v'\n"
+        "# comment\n\n"
+        "MAPPD_APP_NAME=acme   # inline comment\n"
+        "export MAPPD_PG_PORT=15433 # another comment\n"
+        "MAPPD_PG_PASSWORD='a # b'\n"
     )
     monkeypatch.delenv("MAPPD_APP_NAME", raising=False)
     monkeypatch.delenv("MAPPD_PG_PORT", raising=False)
+    monkeypatch.delenv("MAPPD_PG_PASSWORD", raising=False)
     monkeypatch.setenv("MAPPD_ENV_FILE", str(env_file))
     s = Settings.from_env()
     assert s.app_name == "acme"
-    assert ":15433/mappd" in s.database_url
+    assert s.database_url == "postgresql://mappd:a # b@127.0.0.1:15433/mappd"
 
 
 def test_process_env_beats_dotenv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -285,10 +285,11 @@ def check_policies(settings: Settings) -> Check:
         return Check("P", "processes", "policies", "fail", target, _error(e))
     broken = []
     for name, proc in sorted(procs.items()):
-        if proc.autonomy is None:
+        path = proc.autonomy_path()
+        if path is None:
             continue
         try:
-            load_policy(proc.autonomy)
+            load_policy(path)
         except PolicyError as e:
             broken.append(f"{name}: {e}")
     if broken:

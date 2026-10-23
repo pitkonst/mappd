@@ -222,7 +222,7 @@ safely, and a human can follow the same rules.
   it.
 - **[skills/](skills/README.md)** — step-by-step guides for the common tasks: a new process, the
   eval loop, a side effect, a migration, a dataset, debugging a workflow, the release check.
-  Any agent can read them. A test checks that every command and path they name exists.
+  Any agent can read them.
 - **The CLI is the agent's interface.** Every `mappd` command is non-interactive, has `--json`,
   meaningful exit codes and `--help` with examples — the help is the documentation.
   `mappd doctor` checks every layer.

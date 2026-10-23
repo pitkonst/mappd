@@ -65,4 +65,4 @@ one finds its row `done`. Prefer a business key.
 Copy the patterns in `tests/test_actions.py`: done once, replay returns the stored result,
 a crash mid-call becomes `unknown` under `escalate`, a different payload on the same key is
 refused. An acceptance scenario for a crash after sending lives in
-`tests/acceptance/test_support.py`.
+`tests/acceptance/test_mail_stack.py`.

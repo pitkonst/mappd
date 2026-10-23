@@ -16,10 +16,11 @@ from .pages import router as page_router
 # Long polling for development and the acceptance stack; production uses the webhook.
 SCHEDULES = (
     Schedule(name="installation.deadlines", workflow=workflow.check_deadlines, cron="0 * * * * *"),
-    *(
-        (Schedule(name="installation.poll", workflow=workflow.poll, cron="*/5 * * * * *"),)
-        if telegram.mode() == "polling"
-        else ()
+    Schedule(
+        name="installation.poll",
+        workflow=workflow.poll,
+        cron="*/5 * * * * *",
+        when=lambda: telegram.mode() == "polling",
     ),
 )
 

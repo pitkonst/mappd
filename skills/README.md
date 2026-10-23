@@ -5,9 +5,7 @@ one folder per skill, each with a `SKILL.md` (YAML front matter `name` and `desc
 then the steps). Any agent can read them.
 
 They point at the rules rather than repeat them: `AGENTS.md` (hard rules, conventions) stays
-the source of truth. `tests/test_skills.py` checks that every skill is
-well-formed, that every `mappd` command it names exists, and that every repository path it
-names is there.
+the source of truth.
 
 | Skill | Use it when |
 | --- | --- |

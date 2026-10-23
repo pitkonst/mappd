@@ -175,7 +175,7 @@ def baseline_command(
     """Log trivial baselines on the dev set: the floor every metric is read against.
 
     One run per baseline: `majority` (the most common label per field) and each baseline the
-    process's evaluate.py lists. Baseline runs are tagged and skipped by `eval compare`.
+    process's EvalSpec lists. Baseline runs are tagged and skipped by `eval compare`.
     Exit 1 if a run could not be logged.
 
     Example:

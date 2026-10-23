@@ -229,13 +229,18 @@ def test_api_errors_stay_json(tmp_path: Path) -> None:
     assert down.json() == {"detail": "the database is unavailable"}
 
 
-def test_process_policy_loads_its_file(tmp_path: Path) -> None:
+def test_process_policy_loads_its_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = tmp_path / "autonomy.yaml"
     path.write_text("shadow: true\ncategories:\n  how_to: auto\n")
     proc = Process(name="demo", autonomy=path, categories=("how_to", "other"))
     assert proc.policy().shadow is True
     assert proc.policy().level("how_to") == "auto"
     assert Process(name="none").policy().shadow is False
+    override = tmp_path / "override.yaml"
+    override.write_text("shadow: false\n")
+    monkeypatch.setenv("MAPPD_DEMO_AUTONOMY", str(override))
+    assert proc.autonomy_path() == override
+    assert proc.policy().shadow is False
 
 
 def test_a_broken_policy_stops_the_app_at_startup(tmp_path: Path) -> None:
@@ -259,8 +264,10 @@ def test_create_app_collects_process_schedules(
 
     monkeypatch.setattr("mappd.app.runtime.lifespan", lifespan)
     schedule = Schedule(name="demo.tick", workflow=tick, cron="0 * * * * *")
+    skipped = Schedule(name="demo.off", workflow=tick, cron="0 * * * * *", when=lambda: False)
     create_app(
-        Settings(processes_dir=tmp_path), processes=[Process(name="demo", schedules=(schedule,))]
+        Settings(processes_dir=tmp_path),
+        processes=[Process(name="demo", schedules=(schedule, skipped))],
     )
     assert seen["schedules"] == [schedule]
 

@@ -59,8 +59,7 @@ their evals and acceptance tests on the local stack.
   a server over SSH; a rollback is a deploy of an older SHA. The GitHub Deploy workflow is an
   example, skipped until the repository variable `DEPLOY_ENABLED` is `true`. See
   `docs/deploy.md`.
-- **For coding agents**: `AGENTS.md` (hard rules and conventions), task guides in `skills/`
-  checked by a test, `docs/process-guide.md`, and the holdout fenced off with
+- **For coding agents**: `AGENTS.md` (hard rules and conventions), task guides in `skills/` and `docs/process-guide.md`, and the holdout fenced off with
   `.cursorignore` and `.aiderignore`.
 
 ### Known limitations

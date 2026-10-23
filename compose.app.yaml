@@ -50,8 +50,11 @@ x-app: &app
     MAPPD_RFQ_SMTP_PASSWORD: ${MAPPD_RFQ_SMTP_PASSWORD:-mappd}
     MAPPD_SUPPORT_WEBHOOK_URL: ${MAPPD_SUPPORT_WEBHOOK_URL:-}
     MAPPD_SUPPORT_WEBHOOK_SECRET: ${MAPPD_SUPPORT_WEBHOOK_SECRET:-}
-    # Empty: the policy in processes/support/autonomy.yaml (reviewed like code).
+    MAPPD_RFQ_WEBHOOK_URL: ${MAPPD_RFQ_WEBHOOK_URL:-}
+    MAPPD_RFQ_WEBHOOK_SECRET: ${MAPPD_RFQ_WEBHOOK_SECRET:-}
+    # Empty: the policy in processes/<name>/autonomy.yaml (reviewed like code).
     MAPPD_SUPPORT_AUTONOMY: ${MAPPD_SUPPORT_AUTONOMY:-}
+    MAPPD_RFQ_AUTONOMY: ${MAPPD_RFQ_AUTONOMY:-}
     # Installation's Telegram bot: off unless configured; the acceptance stack polls the mock.
     MAPPD_INSTALLATION_TELEGRAM_MODE: ${MAPPD_INSTALLATION_TELEGRAM_MODE:-off}
     MAPPD_INSTALLATION_TELEGRAM_TOKEN: ${MAPPD_INSTALLATION_TELEGRAM_TOKEN:-}
@@ -68,6 +71,7 @@ x-app: &app
     MAPPD_AUTH_HEADER: ${MAPPD_AUTH_HEADER:-}
     MAPPD_AUTH_ROLES_HEADER: ${MAPPD_AUTH_ROLES_HEADER:-}
     MAPPD_AUTH_COOKIE_SECURE: ${MAPPD_AUTH_COOKIE_SECURE:-}
+    MAPPD_WORKFLOWS_PAYLOADS: ${MAPPD_WORKFLOWS_PAYLOADS:-}
 
 services:
   migrate:
@@ -131,7 +135,7 @@ services:
       - "127.0.0.1:${MAPPD_MOCK_MCP_PORT:-9400}:9400"
 
   # An SMTP relay to GreenMail that answers late for recipients named slow*: the window in which
-  # a crash leaves a sent email unacknowledged (tests/acceptance/test_mail.py).
+  # a crash leaves a sent email unacknowledged (tests/acceptance/test_mail_stack.py).
   slow-smtp:
     <<: *app
     profiles: [mocks]

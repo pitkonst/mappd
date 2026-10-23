@@ -1,12 +1,12 @@
 """First-line support: classify, escalate by rule, draft from the knowledge base, approve, send."""
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
 from mappd.autonomy import categories
 from mappd.ops import Cases
 from mappd.process import MockSpec, Process
+from mappd.settings import environment
 
 from . import domain, feedback
 from .api import router
@@ -22,7 +22,9 @@ from .schemas import Classification
 from .service import ingest
 
 # Tests and the acceptance stack point MAPPD_SUPPORT_AUTONOMY at their own policy file.
-AUTONOMY = Path(os.environ.get("MAPPD_SUPPORT_AUTONOMY") or Path(__file__).parent / "autonomy.yaml")
+AUTONOMY = Path(
+    environment().get("MAPPD_SUPPORT_AUTONOMY") or Path(__file__).parent / "autonomy.yaml"
+)
 
 process = Process(
     name="support",

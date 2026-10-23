@@ -44,7 +44,7 @@ def create_app(
         list(processes) if processes is not None else load_processes(settings.processes_dir)
     )
     schedules = [
-        *(s for p in registered for s in p.schedules),
+        *(s for p in registered for s in p.schedules if s.when is None or s.when()),
         *mail.register(registered),
         *events.register(registered),
     ]

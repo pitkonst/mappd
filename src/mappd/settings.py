@@ -10,6 +10,7 @@ reach both. The database URL defaults derive from MAPPD_PG_USER / MAPPD_PG_PASSW
 
 import math
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -129,8 +130,16 @@ def _env_with_dotenv() -> Mapping[str, str]:
         if not stripped or stripped.startswith("#") or "=" not in stripped:
             continue
         key, _, value = stripped.partition("=")
-        file_vars[key.strip()] = value.strip().strip('"').strip("'")
+        file_vars[key.strip()] = _dotenv_value(value)
     return {**file_vars, **os.environ}
+
+
+def _dotenv_value(raw: str) -> str:
+    """An `.env` value: quoted values keep `#`; unquoted values drop trailing `#` comments."""
+    val = raw.strip()
+    if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):  # noqa: PLR2004
+        return val[1:-1]
+    return re.split(r"\s+#", val, maxsplit=1)[0].strip()
 
 
 def _positive_number(name: str, raw: str) -> float:
